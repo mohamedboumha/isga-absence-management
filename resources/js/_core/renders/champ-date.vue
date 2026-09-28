@@ -9,7 +9,11 @@ import type { ChampProps } from './types';
 const props = defineProps<ChampProps>();
 const valeur = defineModel<string>('valeur');
 
-const is_editable = computed(() => props.mode_vue === renders.mode_create || props.mode_vue === renders.mode_edit);
+const is_editable = computed(
+    () =>
+        props.mode_vue === renders.mode_create ||
+        props.mode_vue === renders.mode_edit,
+);
 
 //==============================================================================================================
 // "2026-09-01"  =>  "01/09/2026"
@@ -29,10 +33,18 @@ const valeur_render = computed(() => {
     <div v-else class="grid gap-2">
         <Label :for="nom_champ">
             {{ label }}
-            <span v-if="required && is_editable" class="text-destructive">*</span>
+            <span v-if="required && is_editable" class="text-destructive"
+                >*</span
+            >
         </Label>
 
-        <Input v-if="is_editable" :id="nom_champ" :name="nom_champ" type="date" v-model="valeur" />
+        <Input
+            v-if="is_editable"
+            :id="nom_champ"
+            :name="nom_champ"
+            type="date"
+            v-model="valeur"
+        />
         <p v-else class="text-sm">{{ valeur_render }}</p>
 
         <InputError :message="error" />

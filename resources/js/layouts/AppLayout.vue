@@ -14,7 +14,9 @@ const { breadcrumbs = [] } = defineProps<{
 const page = usePage();
 
 const breadcrumbs_affiches = computed(() =>
-    breadcrumbs.length ? breadcrumbs : ((page.props.breadcrumbs as BreadcrumbItem[] | undefined) ?? []),
+    breadcrumbs.length
+        ? breadcrumbs
+        : ((page.props.breadcrumbs as BreadcrumbItem[] | undefined) ?? []),
 );
 </script>
 

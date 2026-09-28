@@ -8,12 +8,20 @@
         <div class="flex items-center justify-between">
             <h1 class="text-xl font-semibold">{{ titre_page }}</h1>
 
-            <div v-if="mode_vue === renders.mode_consultation" class="flex gap-2">
+            <div
+                v-if="mode_vue === renders.mode_consultation"
+                class="flex gap-2"
+            >
                 <Button as-child variant="outline">
                     <Link :href="`${url_detail}/edit`">Modifier</Link>
                 </Button>
 
-                <Button v-if="item.can_be_deleted" variant="destructive" @click="supprimer">Supprimer</Button>
+                <Button
+                    v-if="item.can_be_deleted"
+                    variant="destructive"
+                    @click="supprimer"
+                    >Supprimer</Button
+                >
             </div>
         </div>
 
@@ -66,7 +74,9 @@
             <!-- Boutons (create / edit uniquement) -->
             <!--=================================================================================================-->
             <div v-if="is_editable" class="flex gap-2">
-                <Button type="submit" :disabled="form.processing">Enregistrer</Button>
+                <Button type="submit" :disabled="form.processing"
+                    >Enregistrer</Button
+                >
 
                 <Button as-child variant="outline">
                     <Link :href="url_annuler">Annuler</Link>
@@ -82,7 +92,9 @@ import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import { Button } from '@/components/ui/button';
 import ChampChaine from '@/_core/renders/champ-chaine.vue';
 import ChampDate from '@/_core/renders/champ-date.vue';
-import ChampSelect, { type SelectOption } from '@/_core/renders/champ-select.vue';
+import ChampSelect, {
+    type SelectOption,
+} from '@/_core/renders/champ-select.vue';
 import { renders, type ModeVue } from '@/_core/renders';
 
 interface Semestre {
@@ -113,14 +125,19 @@ const form = useForm({
     date_fin: props.item.date_fin ?? '',
 });
 
-const is_editable = computed(() => props.mode_vue === renders.mode_create || props.mode_vue === renders.mode_edit);
+const is_editable = computed(
+    () =>
+        props.mode_vue === renders.mode_create ||
+        props.mode_vue === renders.mode_edit,
+);
 
 //==============================================================================================================
 // URLs
 //==============================================================================================================
 const url_list = '/semestres';
 const url_detail = props.item.cle ? `/semestre/${props.item.cle}` : '/semestre';
-const url_annuler = props.mode_vue === renders.mode_edit ? url_detail : url_list;
+const url_annuler =
+    props.mode_vue === renders.mode_edit ? url_detail : url_list;
 
 //==============================================================================================================
 // Actions

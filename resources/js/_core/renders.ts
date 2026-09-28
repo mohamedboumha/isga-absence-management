@@ -5,4 +5,4 @@ export const renders = {
     mode_consultation: 'consultation',
 } as const;
 
-export type ModeVue = typeof renders[keyof typeof renders];
+export type ModeVue = (typeof renders)[keyof typeof renders];

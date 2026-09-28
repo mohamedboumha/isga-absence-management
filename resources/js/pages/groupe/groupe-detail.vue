@@ -1,5 +1,5 @@
 <template>
-    <Head :title="titre_page"/>
+    <Head :title="titre_page" />
 
     <div class="flex max-w-2xl flex-col gap-6 p-4">
         <!--=====================================================================================================-->
@@ -8,12 +8,20 @@
         <div class="flex items-center justify-between">
             <h1 class="text-xl font-semibold">{{ titre_page }}</h1>
 
-            <div v-if="mode_vue === renders.mode_consultation" class="flex gap-2">
+            <div
+                v-if="mode_vue === renders.mode_consultation"
+                class="flex gap-2"
+            >
                 <Button as-child variant="outline">
                     <Link :href="`${url_detail}/edit`">Modifier</Link>
                 </Button>
 
-                <Button v-if="item.can_be_deleted" variant="destructive" @click="supprimer">Supprimer</Button>
+                <Button
+                    v-if="item.can_be_deleted"
+                    variant="destructive"
+                    @click="supprimer"
+                    >Supprimer</Button
+                >
             </div>
         </div>
 
@@ -72,7 +80,9 @@
             <!-- Boutons (create / edit uniquement) -->
             <!--=================================================================================================-->
             <div v-if="is_editable" class="flex gap-2">
-                <Button type="submit" :disabled="form.processing">Enregistrer</Button>
+                <Button type="submit" :disabled="form.processing"
+                    >Enregistrer</Button
+                >
 
                 <Button as-child variant="outline">
                     <Link :href="url_annuler">Annuler</Link>
@@ -82,15 +92,14 @@
     </div>
 </template>
 
-
 <script setup lang="ts">
-import {computed} from 'vue';
-import {Head, Link, router, useForm} from '@inertiajs/vue3';
-import {Button} from '@/components/ui/button';
+import { computed } from 'vue';
+import { Head, Link, router, useForm } from '@inertiajs/vue3';
+import { Button } from '@/components/ui/button';
 import ChampChaine from '@/_core/renders/champ-chaine.vue';
 import ChampSelect from '@/_core/renders/champ-select.vue';
-import {renders, type ModeVue} from '@/_core/renders';
-import type {SelectOption} from '@/_core/renders/types';
+import { renders, type ModeVue } from '@/_core/renders';
+import type { SelectOption } from '@/_core/renders/types';
 
 interface Groupe {
     cle: string | null;
@@ -122,19 +131,24 @@ const form = useForm({
     nom: props.item.nom ?? '',
 });
 
-const is_editable = computed(() => props.mode_vue === renders.mode_create || props.mode_vue === renders.mode_edit);
+const is_editable = computed(
+    () =>
+        props.mode_vue === renders.mode_create ||
+        props.mode_vue === renders.mode_edit,
+);
 
 //==============================================================================================================
 // URLs
 //==============================================================================================================
 const url_list = '/groupes';
 const url_detail = props.item.cle ? `/groupe/${props.item.cle}` : '/groupe';
-const url_annuler = props.mode_vue === renders.mode_edit ? url_detail : url_list;
+const url_annuler =
+    props.mode_vue === renders.mode_edit ? url_detail : url_list;
 
 //==============================================================================================================
 // Actions
 //==============================================================================================================
-const enregistrer = () => form.post(url_detail, {preserveState: 'errors'});
+const enregistrer = () => form.post(url_detail, { preserveState: 'errors' });
 
 const supprimer = () => {
     if (!confirm(`Supprimer le groupe ${props.item.nom} ?`)) return;
