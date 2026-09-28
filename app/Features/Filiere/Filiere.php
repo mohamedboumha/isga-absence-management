@@ -3,6 +3,8 @@
 namespace App\Features\Filiere;
 
 use App\_Core\Base\BaseModel;
+use App\Features\Groupe\Groupe;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * @property int $id
@@ -22,12 +24,15 @@ class Filiere extends BaseModel {
     // RELATIONS
     //
     //[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][]
-    // TODO : groupes() : HasMany  (feature Groupe)
+    public function groupes() : HasMany {
+        return $this->hasMany(Groupe::class, 'filiere_id');
+    }
+
 
 
     public function can_be_deleted() : bool {
-        // TODO : interdire si la filière contient des groupes
-        return true;
+        return !$this->groupes()
+                     ->exists();
     }
 
 

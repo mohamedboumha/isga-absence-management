@@ -3,6 +3,7 @@
 namespace App\Features\AnneeUniversitaire;
 
 use App\_Core\Base\BaseModel;
+use App\Features\Groupe\Groupe;
 use App\Features\Semestre\Semestre;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -66,6 +67,12 @@ class AnneeUniversitaire extends BaseModel {
     }
 
 
+
+    public function groupes() : HasMany {
+        return $this->hasMany(Groupe::class, 'annee_universitaire_id');
+    }
+
+
     //[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][]
     //
     // ATTRIBUTES
@@ -84,10 +91,13 @@ class AnneeUniversitaire extends BaseModel {
 
     public function can_be_deleted() : bool {
         //==============================================================================================================
-        // Interdit si l'année est active ou contient des semestres
+        // Interdit si l'année est active ou contient des semestres ou des groupes
         //==============================================================================================================
-        return !$this->active && !$this->semestres()
-                                       ->exists();
+        return !$this->active
+            && !$this->semestres()
+                     ->exists()
+            && !$this->groupes()
+                     ->exists();
     }
 
 

@@ -62,7 +62,7 @@ class AnneeUniversitaireService {
 
         if (!$annee->can_be_deleted()) {
             throw ValidationException::withMessages([
-                                                        'annee' => "L'année {$annee->libelle} ne peut pas être supprimée (elle est active ou contient des semestres).",
+                                                        'annee' => "L'année {$annee->libelle} ne peut pas être supprimée (elle est active ou contient des semestres ou des groupes).",
                                                     ]);
         }
 
