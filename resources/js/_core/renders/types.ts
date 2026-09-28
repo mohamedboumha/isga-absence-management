@@ -8,3 +8,8 @@ export interface ChampProps {
     required?: boolean;
     placeholder?: string;
 }
+
+export interface SelectOption {
+    valeur: string | number;
+    label: string;
+}

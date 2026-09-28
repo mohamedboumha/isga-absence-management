@@ -3,8 +3,10 @@
 namespace App\Features\AnneeUniversitaire;
 
 use App\_Core\Base\BaseModel;
+use App\Features\Semestre\Semestre;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * @property int $id
@@ -59,7 +61,9 @@ class AnneeUniversitaire extends BaseModel {
     // RELATIONS
     //
     //[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][]
-    // TODO : semestres() : HasMany  (feature Semestre)
+    public function semestres() : HasMany {
+        return $this->hasMany(Semestre::class, 'annee_universitaire_id');
+    }
 
 
     //[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][]
@@ -80,10 +84,10 @@ class AnneeUniversitaire extends BaseModel {
 
     public function can_be_deleted() : bool {
         //==============================================================================================================
-        // Une année active ne peut pas être supprimée
-        // TODO : interdire aussi si l'année contient des semestres
+        // Interdit si l'année est active ou contient des semestres
         //==============================================================================================================
-        return !$this->active;
+        return !$this->active && !$this->semestres()
+                                       ->exists();
     }
 
 
