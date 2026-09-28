@@ -92,9 +92,8 @@ import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import { Button } from '@/components/ui/button';
 import ChampChaine from '@/_core/renders/champ-chaine.vue';
 import ChampDate from '@/_core/renders/champ-date.vue';
-import ChampSelect, {
-    type SelectOption,
-} from '@/_core/renders/champ-select.vue';
+import ChampSelect from '@/_core/renders/champ-select.vue';
+import type { SelectOption } from '@/_core/renders/types';
 import { renders, type ModeVue } from '@/_core/renders';
 
 interface Semestre {
