@@ -6,21 +6,20 @@ use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
-class DatabaseSeeder extends Seeder
-{
+class DatabaseSeeder extends Seeder {
     use WithoutModelEvents;
 
-    /**
-     * Seed the application's database.
-     */
-    public function run(): void
-    {
-        // User::factory(10)->create();
-
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'admin@isga.ma',
-            'password' => 'mmmm',
-        ]);
+    public function run() : void {
+        User::updateOrCreate(
+            ['email' => 'admin@isga.ma'],
+            [
+                'name'              => 'Admin',
+                'prenom'            => 'Super',
+                'password'          => 'password',
+                'role'              => 'super_admin',
+                'actif'             => true,
+                'email_verified_at' => now(),
+            ]
+        );
     }
 }
