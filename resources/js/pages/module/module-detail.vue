@@ -1,0 +1,163 @@
+<template>
+    <Head :title="titre_page"/>
+
+    <div class="flex max-w-2xl flex-col gap-6 p-4">
+        <!--=====================================================================================================-->
+        <!-- En-tête -->
+        <!--=====================================================================================================-->
+        <div class="flex items-center justify-between">
+            <h1 class="text-xl font-semibold">{{ titre_page }}</h1>
+
+            <div v-if="mode_vue === renders.mode_consultation" class="flex gap-2">
+                <Button as-child variant="outline">
+                    <Link :href="`${url_detail}/edit`">Modifier</Link>
+                </Button>
+
+                <Button v-if="item.can_be_deleted" variant="destructive" @click="supprimer">Supprimer</Button>
+            </div>
+        </div>
+
+        <!--=====================================================================================================-->
+        <!-- Champs -->
+        <!--=====================================================================================================-->
+        <form class="grid gap-4" @submit.prevent="enregistrer">
+            <ChampSelect
+                :mode_vue="mode_vue"
+                nom_champ="filiere_id"
+                label="Filière"
+                placeholder="Choisir une filière"
+                required
+                :options="filieres"
+                v-model:valeur="form.filiere_id"
+                :error="form.errors.filiere_id"
+            />
+
+            <div class="grid grid-cols-3 gap-4">
+                <ChampChaine
+                    :mode_vue="mode_vue"
+                    nom_champ="code"
+                    label="Code"
+                    placeholder="GI-BDD"
+                    required
+                    v-model:valeur="form.code"
+                    :error="form.errors.code"
+                />
+
+                <div class="col-span-2">
+                    <ChampChaine
+                        :mode_vue="mode_vue"
+                        nom_champ="intitule"
+                        label="Intitulé"
+                        placeholder="Bases de données"
+                        required
+                        v-model:valeur="form.intitule"
+                        :error="form.errors.intitule"
+                    />
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <ChampSelect
+                    :mode_vue="mode_vue"
+                    nom_champ="semestre"
+                    label="Semestre"
+                    placeholder="Choisir un semestre"
+                    required
+                    :options="semestres"
+                    v-model:valeur="form.semestre"
+                    :error="form.errors.semestre"
+                />
+
+                <ChampNombre
+                    :mode_vue="mode_vue"
+                    nom_champ="volume_horaire"
+                    label="Volume horaire"
+                    placeholder="30"
+                    suffixe="h"
+                    required
+                    :min="1"
+                    :max="300"
+                    v-model:valeur="form.volume_horaire"
+                    :error="form.errors.volume_horaire"
+                />
+            </div>
+
+            <!--=================================================================================================-->
+            <!-- Boutons (create / edit uniquement) -->
+            <!--=================================================================================================-->
+            <div v-if="is_editable" class="flex gap-2">
+                <Button type="submit" :disabled="form.processing">Enregistrer</Button>
+
+                <Button as-child variant="outline">
+                    <Link :href="url_annuler">Annuler</Link>
+                </Button>
+            </div>
+        </form>
+    </div>
+</template>
+
+
+<script setup lang="ts">
+import {computed} from 'vue';
+import {Head, Link, router, useForm} from '@inertiajs/vue3';
+import {Button} from '@/components/ui/button';
+import ChampChaine from '@/_core/renders/champ-chaine.vue';
+import ChampNombre from '@/_core/renders/champ-nombre.vue';
+import ChampSelect from '@/_core/renders/champ-select.vue';
+import {renders, type ModeVue} from '@/_core/renders';
+import type {SelectOption} from '@/_core/renders/types';
+
+interface Module {
+    cle: string | null;
+    filiere_id: number | null;
+    code: string | null;
+    intitule: string | null;
+    semestre: string | null;
+    volume_horaire: number | null;
+    niveau: string | null;
+    can_be_deleted: boolean;
+}
+
+interface ModuleDetailInterface {
+    mode_vue: ModeVue;
+    titre_page: string;
+    item: Module;
+    filieres: SelectOption[];
+    semestres: SelectOption[];
+}
+
+const props = defineProps<ModuleDetailInterface>();
+
+//==============================================================================================================
+// Formulaire
+//==============================================================================================================
+const form = useForm({
+    filiere_id: props.item.filiere_id ?? null,
+    code: props.item.code ?? '',
+    intitule: props.item.intitule ?? '',
+    semestre: props.item.semestre ?? null,
+    volume_horaire: props.item.volume_horaire ?? null,
+});
+
+const is_editable = computed(() => props.mode_vue === renders.mode_create || props.mode_vue === renders.mode_edit);
+
+//==============================================================================================================
+// URLs
+//==============================================================================================================
+const url_list = '/modules';
+const url_detail = props.item.cle ? `/module/${props.item.cle}` : '/module';
+const url_annuler = props.mode_vue === renders.mode_edit ? url_detail : url_list;
+
+//==============================================================================================================
+// Actions
+//==============================================================================================================
+const enregistrer = () => form.post(url_detail, {preserveState: 'errors'});
+
+const supprimer = () => {
+    if (!confirm(`Supprimer le module ${props.item.code} ?`)) return;
+
+    router.delete(url_detail, {
+        onError: (errors) => alert(errors.module),
+    });
+};
+</script>

@@ -25,10 +25,36 @@ class FiliereService {
         self::niveau_m2,
     ];
 
+    const array semestres = ['S1', 'S2', 'S3', 'S4', 'S5', 'S6', 'S7', 'S8', 'S9', 'S10'];
+
 
 
     public static function get_niveaux_pour_select() : array {
         return array_map(fn(string $niveau) => ['valeur' => $niveau, 'label' => $niveau], self::niveaux);
+    }
+
+
+
+    public static function get_semestres_pour_select() : array {
+        return array_map(
+            fn(string $semestre) => ['valeur' => $semestre, 'label' => "$semestre (" . self::get_niveau_by_semestre($semestre) . ")"],
+            self::semestres
+        );
+    }
+
+
+
+    public static function get_niveau_by_semestre(?string $semestre) : ?string {
+        //==============================================================================================================
+        // "S5" => 5 => (5 - 1) / 2 = 2 => niveaux[2] = "L3"
+        //==============================================================================================================
+        if (!$semestre || !in_array($semestre, self::semestres, true)) {
+            return null;
+        }
+
+        $numero = (int) substr($semestre, 1);
+
+        return self::niveaux[intdiv($numero - 1, 2)];
     }
 
 
@@ -80,9 +106,11 @@ class FiliereService {
         $filiere = self::get_or_fail($cle);
 
         if (!$filiere->can_be_deleted()) {
-            throw ValidationException::withMessages([
-                                                        'filiere' => "La filière {$filiere->code} ne peut pas être supprimée (elle contient des groupes).",
-                                                    ]);
+            throw ValidationException::withMessages(
+                [
+                    'filiere' => "La filière {$filiere->code} ne peut pas être supprimée (elle contient des groupes ou des modules).",
+                ]
+            );
         }
 
         $filiere->delete();

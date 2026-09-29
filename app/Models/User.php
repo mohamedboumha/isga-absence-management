@@ -4,6 +4,8 @@ namespace App\Models;
 
 use App\Features\User\UserService;
 use Database\Factories\UserFactory;
+use App\Features\Enseignant\Enseignant;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -19,6 +21,12 @@ class User extends Authenticatable {
             'email_verified_at' => 'datetime',
             'password'          => 'hashed',
         ];
+    }
+
+
+
+    public function enseignant() : HasOne {
+        return $this->hasOne(Enseignant::class, 'user_id');
     }
 
 

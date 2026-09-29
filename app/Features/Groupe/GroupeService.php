@@ -80,6 +80,26 @@ class GroupeService {
     }
 
 
+    //==================================================================================================================
+    // Groupes pour un select : "GI-L3-A (2026-2027)", année la plus récente en premier
+    //==================================================================================================================
+    public static function get_groupes_pour_select() : array {
+        return Groupe
+            ::query()
+            ->with('annee_universitaire')
+            ->join('annees_universitaires', 'annees_universitaires.id', '=', 'groupes.annee_universitaire_id')
+            ->orderByDesc('annees_universitaires.date_debut')
+            ->orderBy('groupes.nom')
+            ->select('groupes.*')
+            ->get()
+            ->map(fn(Groupe $groupe) => [
+                'valeur' => $groupe->id,
+                'label'  => "{$groupe->nom} ({$groupe->annee_universitaire->libelle})",
+            ])
+            ->all();
+    }
+
+
 
     public static function process_update_or_create(?string $cle, array $attributes) : Groupe {
         return Groupe::update_by_cle_or_create($cle, $attributes);

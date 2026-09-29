@@ -1,7 +1,7 @@
 export interface TableHeader {
     label: string;
     nom_colonne: string;
-    render: 'chaine' | 'date' | 'boolean';
+    render: 'chaine' | 'date' | 'boolean' | 'nombre';
     triable: boolean;
 }
 

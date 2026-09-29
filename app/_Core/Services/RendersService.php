@@ -17,6 +17,7 @@ class RendersService {
     const string render_chaine  = 'chaine';
     const string render_date    = 'date';
     const string render_boolean = 'boolean';
+    const string render_nombre  = 'nombre';
 
 
 

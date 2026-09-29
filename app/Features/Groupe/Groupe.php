@@ -3,6 +3,9 @@
 namespace App\Features\Groupe;
 
 use App\_Core\Base\BaseModel;
+use App\Features\Seance\Seance;
+use App\Features\Etudiant\Etudiant;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Features\AnneeUniversitaire\AnneeUniversitaire;
 use App\Features\Filiere\Filiere;
 use App\Features\Filiere\FiliereService;
@@ -10,21 +13,20 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * @property int                $id
- * @property string             $cle
- * @property int                $annee_universitaire_id
- * @property int                $filiere_id
- * @property string             $niveau
- * @property string             $nom
+ * @property int $id
+ * @property string $cle
+ * @property int $annee_universitaire_id
+ * @property int $filiere_id
+ * @property string $niveau
+ * @property string $nom
  * @property AnneeUniversitaire $annee_universitaire
- * @property Filiere            $filiere
+ * @property Filiere $filiere
  *
  * @method static Builder by_annee(?AnneeUniversitaire $annee)
  * @method static Builder by_filiere(?Filiere $filiere)
  */
 class Groupe extends BaseModel {
     protected $table = 'groupes';
-
 
 
     //[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][]
@@ -42,7 +44,17 @@ class Groupe extends BaseModel {
         return $this->belongsTo(Filiere::class, 'filiere_id');
     }
 
-    // TODO : etudiants() : HasMany  (feature Etudiant)
+
+
+    public function etudiants() : HasMany {
+        return $this->hasMany(Etudiant::class, 'groupe_id');
+    }
+
+
+
+    public function seances() : HasMany {
+        return $this->hasMany(Seance::class, 'groupe_id');
+    }
 
 
 
@@ -83,10 +95,10 @@ class Groupe extends BaseModel {
 
 
     public function can_be_deleted() : bool {
-        // TODO : interdire si le groupe contient des étudiants ou des séances
-        return true;
+        return !$this->etudiants()
+                     ->exists() && !$this->seances()
+                                         ->exists();
     }
-
 
 
     //[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][]

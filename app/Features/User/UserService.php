@@ -14,4 +14,10 @@ class UserService {
         self::role_super_admin,
         self::role_admin,
     ];
+
+    const array roles_tous = [
+        self::role_super_admin,
+        self::role_admin,
+        self::role_enseignant,
+    ];
 }

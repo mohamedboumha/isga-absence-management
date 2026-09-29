@@ -4,6 +4,7 @@ namespace App\Features\Filiere;
 
 use App\_Core\Base\BaseModel;
 use App\Features\Groupe\Groupe;
+use App\Features\Module\Module;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
@@ -30,9 +31,16 @@ class Filiere extends BaseModel {
 
 
 
+    public function modules() : HasMany {
+        return $this->hasMany(Module::class, 'filiere_id');
+    }
+
+
+
     public function can_be_deleted() : bool {
         return !$this->groupes()
-                     ->exists();
+                     ->exists() && !$this->modules()
+                                         ->exists();
     }
 
 
