@@ -10,6 +10,10 @@
 
             <div v-if="mode_vue === renders.mode_consultation" class="flex gap-2">
                 <Button as-child variant="outline">
+                    <a :href="`${url_detail}/releve`" target="_blank" rel="noopener">Relevé PDF</a>
+                </Button>
+
+                <Button as-child variant="outline">
                     <Link :href="`${url_detail}/edit`">Modifier</Link>
                 </Button>
 

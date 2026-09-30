@@ -124,6 +124,10 @@ class SideBarService {
                                           ->label("Utilisateurs")
                                           ->icon('ShieldUser')
                                           ->route('utilisateurs.list'))
+                    ->add_item(SideBarItem::new()
+                                          ->label("Journal des actions")
+                                          ->icon('History')
+                                          ->route('journal.list'))
             )
             ->get($user);
     }

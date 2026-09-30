@@ -27,6 +27,18 @@ class TableColumn {
 
 
 
+    public function get_label() : string {
+        return $this->label;
+    }
+
+
+
+    public function get_render() : string {
+        return $this->render;
+    }
+
+
+
     public function nom_colonne(string $nom_colonne) : static {
         $this->nom_colonne = $nom_colonne;
 

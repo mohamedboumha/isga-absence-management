@@ -6,6 +6,7 @@ use App\_Core\Base\BaseModel;
 use App\Features\Etudiant\Etudiant;
 use App\Features\Seance\Seance;
 use App\Models\User;
+use App\Features\Justificatif\Justificatif;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
@@ -19,6 +20,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property Seance $seance
  * @property Etudiant $etudiant
  * @property User|null $saisi_par_user
+ * @property int|null $justificatif_id
+ * @property Justificatif|null $justificatif
  */
 class Absence extends BaseModel {
     protected $table = 'absences';
@@ -47,6 +50,12 @@ class Absence extends BaseModel {
 
     public function etudiant() : BelongsTo {
         return $this->belongsTo(Etudiant::class, 'etudiant_id');
+    }
+
+
+
+    public function justificatif() : BelongsTo {
+        return $this->belongsTo(Justificatif::class, 'justificatif_id');
     }
 
 

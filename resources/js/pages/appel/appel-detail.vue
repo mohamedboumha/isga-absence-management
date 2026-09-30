@@ -17,9 +17,16 @@
                 <p class="text-muted-foreground text-sm">{{ seance.module }} · {{ seance.enseignant }}</p>
             </div>
 
-            <Button v-if="url_seance" as-child variant="outline">
-                <Link :href="url_seance">Voir la séance</Link>
-            </Button>
+            <div class="flex gap-2">
+                <Button as-child variant="outline">
+                    <a :href="`/seance/${seance.cle}/feuille-presence`" target="_blank" rel="noopener">Feuille de
+                        présence</a>
+                </Button>
+
+                <Button v-if="url_seance" as-child variant="outline">
+                    <Link :href="url_seance">Voir la séance</Link>
+                </Button>
+            </div>
         </div>
 
         <!--=====================================================================================================-->

@@ -5,10 +5,20 @@ namespace App\_Core\Builders\Table;
 use Closure;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use App\_Core\Exports\TableauExport;
+use App\_Core\Services\RendersService;
+use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Str;
+use Maatwebsite\Excel\Facades\Excel;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class TableBuilder {
     const int default_per_page = 15;
     const int max_per_page     = 100;
+
+    const int max_lignes_export = 10000;
+    protected string $nom_export = 'export';
 
     protected Builder  $query;
     protected array    $columns       = [];
@@ -33,6 +43,7 @@ class TableBuilder {
         $table_builder->tri_par       = request('tri_par');
         $table_builder->tri_direction = request('tri_direction') === 'desc' ? 'desc' : 'asc';
         $table_builder->per_page      = min(max((int) request('per_page', self::default_per_page), 1), self::max_per_page);
+        $table_builder->nom_export    = Str::slug(request()->path()) ?: 'export';
 
         return $table_builder;
     }
@@ -70,6 +81,13 @@ class TableBuilder {
 
 
     public function get() : array {
+        //==============================================================================================================
+        // ?export=xlsx : on renvoie le fichier Excel à la place de la page (BF-28)
+        //==============================================================================================================
+        if (request('export') === 'xlsx') {
+            throw new HttpResponseException($this->export_excel());
+        }
+
         $this->apply_search();
         $this->apply_tri();
 
@@ -104,6 +122,61 @@ class TableBuilder {
                 'per_page'  => $paginator->perPage(),
             ],
         ];
+    }
+
+
+
+    public function nom_export(string $nom_export) : static {
+        $this->nom_export = $nom_export;
+
+        return $this;
+    }
+
+
+
+    protected function export_excel() : BinaryFileResponse {
+        $this->apply_search();
+        $this->apply_tri();
+
+
+        //==============================================================================================================
+        // Toutes les lignes (pas de pagination), avec les valeurs mises en forme
+        //==============================================================================================================
+        $lignes = [];
+
+        foreach ($this->query->limit(self::max_lignes_export)
+                             ->get() as $model) {
+            $valeurs = $this->get_valeurs($model);
+            $ligne   = [];
+
+            foreach ($this->columns as $column) {
+                $ligne[] = self::formater_pour_export($valeurs[$column->get_nom_colonne()] ?? null, $column->get_render());
+            }
+
+            $lignes[] = $ligne;
+        }
+
+        $entetes = array_map(fn(TableColumn $column) => $column->get_label(), $this->columns);
+
+        return Excel::download(
+            new TableauExport($entetes, $lignes, Str::headline($this->nom_export)),
+            "{$this->nom_export}-" . now()->format('Y-m-d') . '.xlsx'
+        );
+    }
+
+
+
+    protected static function formater_pour_export(mixed $valeur, string $render) : mixed {
+        if ($valeur === null) {
+            return '';
+        }
+
+        return match ($render) {
+            RendersService::render_boolean => $valeur ? 'Oui' : 'Non',
+            RendersService::render_date    => Carbon::parse($valeur)
+                                                    ->format('d/m/Y'),
+            default                        => $valeur,
+        };
     }
 
 

@@ -21,6 +21,10 @@
                 </Button>
 
                 <Button as-child variant="outline">
+                    <a :href="`${url_detail}/feuille-presence`" target="_blank" rel="noopener">Feuille de présence</a>
+                </Button>
+
+                <Button as-child variant="outline">
                     <Link :href="`${url_detail}/edit`">Modifier</Link>
                 </Button>
 

@@ -12,6 +12,7 @@ use App\Features\Seance\Seance;
 use App\Features\User\UserService;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use App\Features\Justificatif\JustificatifService;
 
 class AppelService {
     //[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][]
@@ -147,8 +148,8 @@ class AppelService {
                 ::query()
                 ->where('seance_id', $seance->id)
                 ->when($ids_absents, fn($query) => $query->whereNotIn('etudiant_id', $ids_absents))
-                ->delete();
-
+                ->get()
+                ->each(fn(Absence $absence) => $absence->delete());
 
             //==========================================================================================================
             // Étudiants absents : création, ou restauration d'une absence archivée
@@ -167,6 +168,14 @@ class AppelService {
 
                 $absence->remarque   = $ligne['remarque'] ?? null;
                 $absence->saisie_par = $user->id;
+
+                //======================================================================================================
+                // Un justificatif déjà validé couvre cette date : l'absence est justifiée d'office
+                //======================================================================================================
+                $justificatif = JustificatifService::get_justificatif_valide_pour($absence->etudiant_id, $seance->date?->format('Y-m-d') ?? '');
+
+                $absence->justifiee       = $justificatif !== null;
+                $absence->justificatif_id = $justificatif?->id;
                 $absence->save();
             }
 

@@ -3,6 +3,7 @@
 namespace App\_Core\Base;
 
 use Illuminate\Database\Eloquent\Builder;
+use App\Features\Journal\JournalObserver;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -21,6 +22,11 @@ abstract class BaseModel extends Model {
 
     protected static function booted() : void {
         parent::booted();
+
+        //==============================================================================================================
+        // Journal des actions : chaque modèle métier est observé (traçabilité, section 5)
+        //==============================================================================================================
+        static::observe(JournalObserver::class);
 
         //==============================================================================================================
         // Génération de la clé à la création
