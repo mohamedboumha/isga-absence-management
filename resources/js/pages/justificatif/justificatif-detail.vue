@@ -166,6 +166,8 @@ import ChampSelect from '@/_core/renders/champ-select.vue';
 import ChampTexte from '@/_core/renders/champ-texte.vue';
 import {renders, type ModeVue} from '@/_core/renders';
 import type {SelectOption} from '@/_core/renders/types';
+import {demander_confirmation} from "@/_core/dialogs/confirmation";
+import {afficher_erreurs, supprimer_avec_confirmation} from "@/_core/dialogs/actions";
 
 interface AbsenceCouverte {
     date: string;
@@ -241,29 +243,33 @@ const erreur_action = ref<string | undefined>();
 
 const enregistrer = () => form.post(url_detail, {forceFormData: true, preserveState: 'errors'});
 
-const valider = () => {
-    if (!confirm('Valider ce justificatif ? Les absences de la période seront marquées justifiées.')) return;
-
-    router.post(`${url_detail}/valider`, {}, {
-        onError: (errors) => (erreur_action.value = errors.justificatif),
+const valider = async () => {
+    const { confirme } = await demander_confirmation({
+        titre: 'Valider ce justificatif ?',
+        message: `${props.item.absences.length} absence(s) sur la période seront marquées comme justifiées.`,
+        bouton: 'Valider',
     });
+
+    if (!confirme) return;
+
+    router.post(`${url_detail}/valider`, {}, { onError: afficher_erreurs });
 };
 
-const refuser = () => {
-    const motif_refus = prompt('Motif du refus (obligatoire) :');
-
-    if (motif_refus === null) return;
-
-    router.post(`${url_detail}/refuser`, {motif_refus}, {
-        onError: (errors) => (erreur_action.value = errors.motif_refus ?? errors.justificatif),
+const refuser = async () => {
+    const { confirme, valeur } = await demander_confirmation({
+        titre: 'Refuser ce justificatif ?',
+        message: 'Le motif sera conservé dans la fiche du justificatif.',
+        bouton: 'Refuser',
+        variante: 'destructive',
+        champ: { label: 'Motif du refus', placeholder: 'Ex. document illisible', obligatoire: true },
     });
+
+    if (!confirme) return;
+
+    router.post(`${url_detail}/refuser`, { motif_refus: valeur }, { onError: afficher_erreurs });
 };
 
-const supprimer = () => {
-    if (!confirm('Supprimer ce justificatif ?')) return;
-
-    router.delete(url_detail, {
-        onError: (errors) => (erreur_action.value = errors.justificatif),
-    });
-};
+const supprimer = () =>
+    supprimer_avec_confirmation(url_detail, 'Supprimer ce justificatif ?', 'Le document joint sera conservé dans les archives.');
+    supprimer_avec_confirmation(url_detail, 'Supprimer ce justificatif ?', 'Le document joint sera conservé dans les archives.');
 </script>

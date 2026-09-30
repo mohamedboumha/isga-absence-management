@@ -108,6 +108,7 @@ import ChampChaine from '@/_core/renders/champ-chaine.vue';
 import ChampMultiSelect from '@/_core/renders/champ-multi-select.vue';
 import {renders, type ModeVue} from '@/_core/renders';
 import type {SelectOption} from '@/_core/renders/types';
+import {supprimer_avec_confirmation} from "@/_core/dialogs/actions";
 
 interface Enseignant {
     cle: string | null;
@@ -154,11 +155,10 @@ const url_annuler = props.mode_vue === renders.mode_edit ? url_detail : url_list
 //==============================================================================================================
 const enregistrer = () => form.post(url_detail, {preserveState: 'errors'});
 
-const supprimer = () => {
-    if (!confirm(`Supprimer l'enseignant ${props.item.prenom} ${props.item.nom} ? Son compte de connexion sera désactivé.`)) return;
-
-    router.delete(url_detail, {
-        onError: (errors) => alert(errors.enseignant),
-    });
-};
+const supprimer = () =>
+    supprimer_avec_confirmation(
+        url_detail,
+        `Supprimer l'enseignant ${props.item.prenom} ${props.item.nom} ?`,
+        'Sa fiche sera archivée et son compte de connexion désactivé.',
+    );
 </script>

@@ -106,6 +106,7 @@ import ChampChaine from '@/_core/renders/champ-chaine.vue';
 import ChampSelect from '@/_core/renders/champ-select.vue';
 import {renders, type ModeVue} from '@/_core/renders';
 import type {SelectOption} from '@/_core/renders/types';
+import {supprimer_avec_confirmation} from "@/_core/dialogs/actions";
 
 interface Groupe {
     cle: string | null;
@@ -156,11 +157,10 @@ const url_annuler =
 //==============================================================================================================
 const enregistrer = () => form.post(url_detail, {preserveState: 'errors'});
 
-const supprimer = () => {
-    if (!confirm(`Supprimer le groupe ${props.item.nom} ?`)) return;
-
-    router.delete(url_detail, {
-        onError: (errors) => alert(errors.groupe),
-    });
-};
+const supprimer = () =>
+    supprimer_avec_confirmation(
+        url_detail,
+        `Supprimer le groupe ${props.item.nom} ?`,
+        "Il sera archivé et n'apparaîtra plus dans les listes.",
+    );
 </script>

@@ -106,6 +106,7 @@ import ChampNombre from '@/_core/renders/champ-nombre.vue';
 import ChampSelect from '@/_core/renders/champ-select.vue';
 import {renders, type ModeVue} from '@/_core/renders';
 import type {SelectOption} from '@/_core/renders/types';
+import {supprimer_avec_confirmation} from "@/_core/dialogs/actions";
 
 interface Module {
     cle: string | null;
@@ -153,11 +154,10 @@ const url_annuler = props.mode_vue === renders.mode_edit ? url_detail : url_list
 //==============================================================================================================
 const enregistrer = () => form.post(url_detail, {preserveState: 'errors'});
 
-const supprimer = () => {
-    if (!confirm(`Supprimer le module ${props.item.code} ?`)) return;
-
-    router.delete(url_detail, {
-        onError: (errors) => alert(errors.module),
-    });
-};
+const supprimer = () =>
+    supprimer_avec_confirmation(
+        url_detail,
+        `Supprimer le module ${props.item.code} ?`,
+        "Il sera archivé et ne sera plus proposé lors de la planification des séances.",
+    );
 </script>

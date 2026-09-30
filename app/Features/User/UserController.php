@@ -9,6 +9,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
+use App\_Core\Services\NotificationService;
 
 class UserController extends Controller {
     const string page_list   = 'utilisateur/utilisateur-list';
@@ -62,9 +63,13 @@ class UserController extends Controller {
 
 
     public function lien_mot_de_passe(string $cle) : RedirectResponse {
-        UserService::envoyer_lien_mot_de_passe(UserService::get_or_fail($cle));
+        $user = UserService::get_or_fail($cle);
 
-        return to_route(self::route_detail, ['cle' => $cle])->with('lien_envoye', true);
+        UserService::envoyer_lien_mot_de_passe($user);
+
+        NotificationService::succes("Lien envoyé à {$user->email}.");
+
+        return to_route(self::route_detail, ['cle' => $cle]);
     }
 
 

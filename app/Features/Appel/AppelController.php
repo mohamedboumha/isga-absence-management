@@ -11,6 +11,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
+use App\_Core\Services\NotificationService;
 
 class AppelController extends Controller {
     const string page_detail      = 'appel/appel-detail';
@@ -72,7 +73,13 @@ class AppelController extends Controller {
 
         abort_if($refus !== null, 403, (string) $refus);
 
-        AppelService::enregistrer_appel($seance, $request->validated('absences') ?? [], $user);
+        $absences = $request->validated('absences') ?? [];
+
+        AppelService::enregistrer_appel($seance, $absences, $user);
+
+        NotificationService::succes(count($absences)
+                                        ? "Appel enregistré : " . count($absences) . " absent(s)."
+                                        : "Appel enregistré : tous présents.");
 
         return to_route('appel.detail', ['cle' => $seance->cle]);
     }

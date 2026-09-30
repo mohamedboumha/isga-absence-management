@@ -95,13 +95,10 @@
                     </div>
 
                     <!-- Consultation : badge -->
-                    <span
+                    <StatutPill
                         v-else
-                        class="rounded-full px-2 py-0.5 text-xs font-medium"
-                        :class="etudiant.absent ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'"
-                    >
-                        {{ etudiant.absent ? (etudiant.justifiee ? 'Absent (justifié)' : 'Absent') : 'Présent' }}
-                    </span>
+                        :statut="etudiant.absent ? (etudiant.justifiee ? 'justifie' : 'absent') : 'present'"
+                    ></StatutPill>
                 </div>
 
                 <!-- Remarque (BF-15) -->
@@ -143,6 +140,7 @@ import {Head, Link, useForm} from '@inertiajs/vue3';
 import InputError from '@/components/InputError.vue';
 import {Button} from '@/components/ui/button';
 import {renders, type ModeVue} from '@/_core/renders';
+import StatutPill from "@/_core/renders/statut-pill.vue";
 
 interface SeanceInfos {
     cle: string;

@@ -1,5 +1,5 @@
 <template>
-    <Head :title="titre_page" />
+    <Head :title="titre_page"/>
 
     <div class="flex max-w-2xl flex-col gap-6 p-4">
         <!--=================================================================================================-->
@@ -20,7 +20,8 @@
                     v-if="item.can_be_deleted"
                     variant="destructive"
                     @click="supprimer"
-                    >Supprimer</Button
+                >Supprimer
+                </Button
                 >
             </div>
         </div>
@@ -72,7 +73,8 @@
             <!--=============================================================================================-->
             <div v-if="is_editable" class="flex gap-2">
                 <Button type="submit" :disabled="form.processing"
-                    >Enregistrer</Button
+                >Enregistrer
+                </Button
                 >
 
                 <Button as-child variant="outline">
@@ -84,13 +86,14 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
-import { Head, Link, router, useForm } from '@inertiajs/vue3';
-import { Button } from '@/components/ui/button';
+import {computed} from 'vue';
+import {Head, Link, router, useForm} from '@inertiajs/vue3';
+import {Button} from '@/components/ui/button';
 import ChampBoolean from '@/_core/renders/champ-boolean.vue';
 import ChampChaine from '@/_core/renders/champ-chaine.vue';
 import ChampDate from '@/_core/renders/champ-date.vue';
-import { renders, type ModeVue } from '@/_core/renders';
+import {renders, type ModeVue} from '@/_core/renders';
+import {supprimer_avec_confirmation} from "@/_core/dialogs/actions";
 
 interface AnneeUniversitaire {
     cle: string | null;
@@ -139,11 +142,10 @@ const url_annuler =
 //==============================================================================================================
 const enregistrer = () => form.post(url_detail);
 
-const supprimer = () => {
-    if (!confirm(`Supprimer l'année ${props.item.libelle} ?`)) return;
-
-    router.delete(url_detail, {
-        onError: (errors) => alert(errors.annee),
-    });
-};
+const supprimer = () =>
+    supprimer_avec_confirmation(
+        url_detail,
+        `Supprimer l'année ${props.item.libelle} ?`,
+        "Elle sera archivée et n'apparaîtra plus dans les listes.",
+    );
 </script>

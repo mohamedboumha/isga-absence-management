@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
+use App\_Core\Services\NotificationService;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class JustificatifController extends Controller {
@@ -82,7 +83,9 @@ class JustificatifController extends Controller {
         /** @var User $user */
         $user = $request->user();
 
-        JustificatifService::valider(JustificatifService::get_or_fail($cle), $user);
+        $nb_absences = JustificatifService::valider(JustificatifService::get_or_fail($cle), $user);
+
+        NotificationService::succes("Justificatif validé : {$nb_absences} absence(s) justifiée(s).");
 
         return to_route(self::route_detail, ['cle' => $cle]);
     }
@@ -99,6 +102,8 @@ class JustificatifController extends Controller {
         $user = $request->user();
 
         JustificatifService::refuser(JustificatifService::get_or_fail($cle), $donnees['motif_refus'], $user);
+
+        NotificationService::succes("Justificatif refusé.");
 
         return to_route(self::route_detail, ['cle' => $cle]);
     }

@@ -1,19 +1,22 @@
-<script setup lang="ts">
-import { usePage } from '@inertiajs/vue3';
-import AppLogoIcon from '@/components/AppLogoIcon.vue';
-
-const name = usePage().props.name;
-</script>
-
 <template>
-    <div
-        class="flex aspect-square size-8 items-center justify-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground"
-    >
-        <AppLogoIcon class="size-5 fill-current text-white dark:text-black" />
+    <!--=========================================================================================================-->
+    <!-- Barre latérale ouverte : logo ISGA + nom de l'application -->
+    <!--=========================================================================================================-->
+    <div class="flex min-w-0 items-center gap-3 group-data-[collapsible=icon]:hidden">
+        <img src="/images/logo-isga.png" alt="ISGA — Institut supérieur d'ingénierie et des affaires" class="h-9 w-auto shrink-0" />
+
+        <span class="text-muted-foreground border-l pl-3 text-xs leading-tight">
+            Gestion<br />des absences
+        </span>
     </div>
-    <div class="ml-1 grid flex-1 text-left text-sm">
-        <span class="mb-0.5 truncate leading-tight font-semibold">{{
-            name
-        }}</span>
+
+    <!--=========================================================================================================-->
+    <!-- Barre latérale réduite : le "S" rouge du logo -->
+    <!--=========================================================================================================-->
+    <div
+        class="bg-isga-rouge hidden size-8 items-center justify-center rounded-md text-sm font-bold text-white group-data-[collapsible=icon]:flex"
+        aria-label="ISGA"
+    >
+        S
     </div>
 </template>

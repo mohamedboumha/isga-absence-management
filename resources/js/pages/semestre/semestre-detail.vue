@@ -95,6 +95,8 @@ import ChampDate from '@/_core/renders/champ-date.vue';
 import ChampSelect from '@/_core/renders/champ-select.vue';
 import type { SelectOption } from '@/_core/renders/types';
 import { renders, type ModeVue } from '@/_core/renders';
+import {supprimer_avec_confirmation} from "@/_core/dialogs/actions";
+import {toast} from "vue-sonner";
 
 interface Semestre {
     cle: string | null;
@@ -141,13 +143,17 @@ const url_annuler =
 //==============================================================================================================
 // Actions
 //==============================================================================================================
-const enregistrer = () => form.post(url_detail, { preserveState: 'errors' });
-
-const supprimer = () => {
-    if (!confirm(`Supprimer le semestre ${props.item.libelle} ?`)) return;
-
-    router.delete(url_detail, {
-        onError: (errors) => alert(errors.semestre),
+const enregistrer = () =>
+    form.post(url_detail, {
+        preserveState: 'errors',
+        onError: () => toast.error('Certains champs sont à corriger.'),
     });
-};
+
+
+const supprimer = () =>
+    supprimer_avec_confirmation(
+        url_detail,
+        `Supprimer le semestre ${props.item.libelle} ?`,
+        "Il sera archivé et n'apparaîtra plus dans les listes.",
+    );
 </script>

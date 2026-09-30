@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
+use App\_Core\Services\NotificationService;
 
 class SemestreController extends Controller {
     const string page_list   = 'semestre/semestre-list';
@@ -58,6 +59,8 @@ class SemestreController extends Controller {
     public function update(SemestreRequest $request, ?string $cle = null) : RedirectResponse {
         $semestre = SemestreService::process_update_or_create($cle, $request->validated());
 
+        NotificationService::succes($cle ? "Semestre enregistré." : "Semestre créé.");
+
         return to_route(self::route_detail, ['cle' => $semestre->cle]);
     }
 
@@ -65,6 +68,8 @@ class SemestreController extends Controller {
 
     public function delete(string $cle) : RedirectResponse {
         SemestreService::process_delete($cle);
+
+        NotificationService::succes("Semestre supprimé.");
 
         return to_route(self::route_list);
     }

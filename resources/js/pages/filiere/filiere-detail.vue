@@ -84,6 +84,7 @@ import { Button } from '@/components/ui/button';
 import ChampChaine from '@/_core/renders/champ-chaine.vue';
 import ChampTexte from '@/_core/renders/champ-texte.vue';
 import { renders, type ModeVue } from '@/_core/renders';
+import {supprimer_avec_confirmation} from "@/_core/dialogs/actions";
 
 interface Filiere {
     cle: string | null;
@@ -129,11 +130,10 @@ const url_annuler =
 //==============================================================================================================
 const enregistrer = () => form.post(url_detail, { preserveState: 'errors' });
 
-const supprimer = () => {
-    if (!confirm(`Supprimer la filière ${props.item.code} ?`)) return;
-
-    router.delete(url_detail, {
-        onError: (errors) => alert(errors.filiere),
-    });
-};
+const supprimer = () =>
+    supprimer_avec_confirmation(
+        url_detail,
+        `Supprimer la filière ${props.item.code} ?`,
+        "Elle sera archivée et n'apparaîtra plus dans les listes.",
+    );
 </script>

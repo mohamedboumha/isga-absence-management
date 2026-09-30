@@ -119,6 +119,7 @@ import ChampChaine from '@/_core/renders/champ-chaine.vue';
 import ChampSelect from '@/_core/renders/champ-select.vue';
 import {renders, type ModeVue} from '@/_core/renders';
 import type {SelectOption} from '@/_core/renders/types';
+import {demander_confirmation} from "@/_core/dialogs/confirmation";
 
 interface Utilisateur {
     cle: string | null;
@@ -178,8 +179,14 @@ const envoi_en_cours = ref(false);
 
 const enregistrer = () => form.post(url_detail, {preserveState: 'errors'});
 
-const envoyer_lien = () => {
-    if (!confirm(`Envoyer à ${props.item.email} un lien pour choisir un nouveau mot de passe ?`)) return;
+const envoyer_lien = async () => {
+    const {confirme} = await demander_confirmation({
+        titre: 'Envoyer un lien de mot de passe ?',
+        message: `${props.item.email} recevra un e-mail pour choisir un nouveau mot de passe.`,
+        bouton: 'Envoyer le lien',
+    });
+
+    if (!confirme) return;
 
     envoi_en_cours.value = true;
 

@@ -160,6 +160,7 @@ import ChampHeure from '@/_core/renders/champ-heure.vue';
 import ChampSelect from '@/_core/renders/champ-select.vue';
 import {renders, type ModeVue} from '@/_core/renders';
 import type {SelectOption} from '@/_core/renders/types';
+import {supprimer_avec_confirmation} from "@/_core/dialogs/actions";
 
 interface Seance {
     cle: string | null;
@@ -245,11 +246,10 @@ const url_annuler = props.mode_vue === renders.mode_edit ? url_detail : url_list
 //==============================================================================================================
 const enregistrer = () => form.post(url_detail, {preserveState: 'errors'});
 
-const supprimer = () => {
-    if (!confirm('Supprimer cette séance ?')) return;
-
-    router.delete(url_detail, {
-        onError: (errors) => alert(errors.seance),
-    });
-};
+const supprimer = () =>
+    supprimer_avec_confirmation(
+        url_detail,
+        'Supprimer cette séance ?',
+        "Elle disparaîtra du planning. Pour garder une trace, vous pouvez plutôt la marquer comme annulée.",
+    );
 </script>
