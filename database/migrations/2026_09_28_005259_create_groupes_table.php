@@ -15,11 +15,10 @@ return new class extends Migration {
                   ->constrained('annees_universitaires')
                   ->restrictOnDelete();
 
-            $table->foreignId('filiere_id')
-                  ->constrained('filieres')
+            $table->foreignId('niveau_etude_id')
+                  ->constrained('niveaux_etudes')
                   ->restrictOnDelete();
 
-            $table->string('niveau', 2);   // L1, L2, L3, M1, M2
             $table->string('nom', 30);     // ex. GI-L3-A
 
             $table->timestamps();

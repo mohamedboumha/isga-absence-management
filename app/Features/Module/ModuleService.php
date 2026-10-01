@@ -7,6 +7,7 @@ use App\_Core\Builders\Table\TableColumn;
 use App\_Core\Services\RendersService;
 use App\Features\Filiere\FiliereService;
 use Illuminate\Validation\ValidationException;
+use App\Features\NiveauEtude\NiveauEtudeService;
 
 class ModuleService {
     //==================================================================================================================
@@ -15,7 +16,7 @@ class ModuleService {
     public static function get_table() : array {
         return TableBuilder
             ::new(Module::query()
-                        ->with('filiere'))
+                        ->with('niveau_etude'))
             ->add_column(
                 TableColumn
                     ::new()
@@ -37,8 +38,8 @@ class ModuleService {
             ->add_column(
                 TableColumn
                     ::new()
-                    ->label("Filière")
-                    ->nom_colonne('filiere.code')
+                    ->label("Niveau d'études")
+                    ->nom_colonne('niveau_etude.code')
                     ->render(RendersService::render_chaine)
             )
             ->add_column(
@@ -46,9 +47,8 @@ class ModuleService {
                     ::new()
                     ->label("Semestre")
                     ->nom_colonne('semestre')
-                    ->render(RendersService::render_chaine)
+                    ->render(RendersService::render_nombre)
                     ->triable()
-                    ->cherchable()
             )
             ->add_column(
                 TableColumn
@@ -77,8 +77,7 @@ class ModuleService {
     //==================================================================================================================
     public static function get_selects() : array {
         return [
-            'filieres'  => FiliereService::get_filieres_pour_select(),
-            'semestres' => FiliereService::get_semestres_pour_select(),
+            'niveaux' => NiveauEtudeService::get_niveaux_avec_semestres_pour_select(),
         ];
     }
 

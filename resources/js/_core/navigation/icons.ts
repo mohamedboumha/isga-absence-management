@@ -1,32 +1,42 @@
 import {
     BookOpen,
     CalendarCheck,
-    CalendarDays,
     CalendarRange,
     ChartColumn,
     Circle,
     FileCheck,
     GraduationCap,
+    History,
+    Layers,
     LayoutGrid,
+    ListTree,
     Presentation,
     ShieldUser,
+    TrendingUp,
     UserRound,
     Users,
     UserX,
 } from '@lucide/vue';
-import type { Component } from 'vue';
+import type {Component} from 'vue';
 
+//==============================================================================================================
+// Nom envoyé par SideBarService (PHP)  =>  composant icône
+// Ajouter ici chaque nouvelle icône utilisée dans le menu
+//==============================================================================================================
 const icons: Record<string, Component> = {
     BookOpen,
     CalendarCheck,
-    CalendarDays,
     CalendarRange,
     ChartColumn,
     FileCheck,
     GraduationCap,
+    History,
+    Layers,
     LayoutGrid,
+    ListTree,
     Presentation,
     ShieldUser,
+    TrendingUp,
     UserRound,
     Users,
     UserX,

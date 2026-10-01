@@ -26,7 +26,9 @@ class ExportService {
 
 
     public static function get_periode_render(array $periode) : string {
-        return 'Du ' . Carbon::parse($periode['date_debut'])->format('d/m/Y') . ' au ' . Carbon::parse($periode['date_fin'])->format('d/m/Y');
+        return 'Du ' . Carbon::parse($periode['date_debut'])
+                             ->format('d/m/Y') . ' au ' . Carbon::parse($periode['date_fin'])
+                                                                ->format('d/m/Y');
     }
 
 
@@ -50,7 +52,15 @@ class ExportService {
     // Relevé d'absences d'un étudiant (BF-27)
     //==================================================================================================================
     public static function get_releve_etudiant(Etudiant $etudiant, array $periode) : array {
-        $etudiant->loadMissing(['groupe.filiere', 'groupe.annee_universitaire']);
+        //==============================================================================================================
+        // Les groupes de l'étudiant (une inscription par année) sur la période
+        //==============================================================================================================
+        $inscriptions = $etudiant
+            ->inscriptions()
+            ->with(['groupe.niveau_etude', 'annee_universitaire'])
+            ->get()
+            ->filter(fn($inscription) => $inscription->annee_universitaire->date_fin?->format('Y-m-d') >= $periode['date_debut']
+                && $inscription->annee_universitaire->date_debut?->format('Y-m-d') <= $periode['date_fin']);
 
         $absences = Absence
             ::query()
@@ -63,10 +73,14 @@ class ExportService {
             ->sortBy(fn(Absence $absence) => $absence->seance->date?->format('Y-m-d') . ' ' . $absence->seance->heure_debut)
             ->values();
 
-        $heures_prevues = self::get_seances_tenues($etudiant->groupe_id, $periode)->sum(fn(Seance $seance) => $seance->duree_heures);
+        $heures_prevues = $inscriptions->sum(fn($inscription) => self::get_seances_tenues($inscription->groupe_id, $periode)
+                                                                     ->sum(fn(Seance $seance) => $seance->duree_heures));
         $heures_absence = $absences->sum(fn(Absence $absence) => $absence->seance->duree_heures);
 
         return [
+            'groupes'  => $inscriptions
+                ->map(fn($inscription) => "{$inscription->groupe->nom} ({$inscription->groupe->niveau_etude->libelle})")
+                ->join(', ') ?: "Non inscrit sur cette période",
             'etudiant' => $etudiant,
             'periode'  => self::get_periode_render($periode),
             'absences' => $absences->map(fn(Absence $absence) => [
@@ -76,10 +90,12 @@ class ExportService {
                 'type'      => $absence->seance->type,
                 'justifiee' => $absence->justifiee,
                 'remarque'  => $absence->remarque,
-            ])->all(),
+            ])
+                                   ->all(),
             'total'    => [
                 'nb_absences'   => $absences->count(),
-                'nb_justifiees' => $absences->where('justifiee', true)->count(),
+                'nb_justifiees' => $absences->where('justifiee', true)
+                                            ->count(),
                 'heures'        => round($heures_absence, 1),
                 'taux'          => StatistiqueService::taux($heures_absence, $heures_prevues),
             ],
@@ -92,7 +108,7 @@ class ExportService {
     // Rapport d'un groupe : chaque étudiant avec son taux (BF-27)
     //==================================================================================================================
     public static function get_rapport_groupe(Groupe $groupe, array $periode) : array {
-        $groupe->loadMissing(['filiere', 'annee_universitaire']);
+        $groupe->loadMissing(['niveau_etude.cycle', 'annee_universitaire']);
 
         $seances        = self::get_seances_tenues($groupe->id, $periode);
         $heures_prevues = $seances->sum(fn(Seance $seance) => $seance->duree_heures);
@@ -117,7 +133,8 @@ class ExportService {
                     'cne'               => $etudiant->cne,
                     'nom_complet'       => $etudiant->nom_complet,
                     'nb_absences'       => $absences->count(),
-                    'nb_non_justifiees' => $absences->where('justifiee', false)->count(),
+                    'nb_non_justifiees' => $absences->where('justifiee', false)
+                                                    ->count(),
                     'heures'            => round($heures, 1),
                     'taux'              => StatistiqueService::taux($heures, $heures_prevues),
                 ];
@@ -148,7 +165,10 @@ class ExportService {
 
         return [
             'seance'    => $seance,
-            'etudiants' => $seance->groupe->etudiants()->orderBy('nom')->orderBy('prenom')->get(),
+            'etudiants' => $seance->groupe->etudiants()
+                                          ->orderBy('nom')
+                                          ->orderBy('prenom')
+                                          ->get(),
         ];
     }
 }

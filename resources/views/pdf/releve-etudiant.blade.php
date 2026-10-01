@@ -13,8 +13,8 @@
             <td>{{ $etudiant->cne }}</td>
         </tr>
         <tr>
-            <td class="label">Groupe</td>
-            <td>{{ $etudiant->groupe->nom }} ({{ $etudiant->groupe->filiere->nom }})</td>
+            <td class="label">Groupe(s)</td>
+            <td>{{ $groupes }}</td>
             <td class="label">Période</td>
             <td>{{ $periode }}</td>
         </tr>

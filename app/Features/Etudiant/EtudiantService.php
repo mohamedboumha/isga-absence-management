@@ -7,6 +7,10 @@ use App\_Core\Builders\Table\TableColumn;
 use App\_Core\Services\RendersService;
 use App\Features\Groupe\GroupeService;
 use Illuminate\Validation\ValidationException;
+use App\Features\AnneeUniversitaire\AnneeUniversitaireService;
+use App\Features\Groupe\Groupe;
+use App\Features\Inscription\InscriptionService;
+use Illuminate\Support\Facades\DB;
 
 class EtudiantService {
     //==================================================================================================================
@@ -15,7 +19,7 @@ class EtudiantService {
     public static function get_table() : array {
         return TableBuilder
             ::new(Etudiant::query()
-                          ->with(['groupe.annee_universitaire']))
+                          ->with(['inscription_active.groupe.niveau_etude']))
             ->add_column(
                 TableColumn
                     ::new()
@@ -46,15 +50,15 @@ class EtudiantService {
             ->add_column(
                 TableColumn
                     ::new()
-                    ->label("Groupe")
-                    ->nom_colonne('groupe.nom')
+                    ->label("Groupe (année active)")
+                    ->nom_colonne('inscription_active.groupe.nom')
                     ->render(RendersService::render_chaine)
             )
             ->add_column(
                 TableColumn
                     ::new()
-                    ->label("Année")
-                    ->nom_colonne('groupe.annee_universitaire.libelle')
+                    ->label("Niveau")
+                    ->nom_colonne('inscription_active.groupe.niveau_etude.code')
                     ->render(RendersService::render_chaine)
             )
             ->default_tri('nom')
@@ -66,14 +70,35 @@ class EtudiantService {
 
     public static function get_selects() : array {
         return [
-            'groupes' => GroupeService::get_groupes_pour_select(),
+            'groupes' => [
+                ['valeur' => '', 'label' => "Non inscrit cette année"],
+                ...GroupeService::get_groupes_annee_active_pour_select(),
+            ],
         ];
     }
 
 
 
     public static function process_update_or_create(?string $cle, array $attributes) : Etudiant {
-        return Etudiant::update_by_cle_or_create($cle, $attributes);
+        $groupe_id = $attributes['groupe_id'] ?? null;
+        unset($attributes['groupe_id']);
+
+        return DB::transaction(function () use ($cle, $attributes, $groupe_id) {
+            $etudiant = Etudiant::update_by_cle_or_create($cle, $attributes);
+
+            //==========================================================================================================
+            // Inscription de l'année active : création, changement de groupe ou retrait
+            //==========================================================================================================
+            $annee = AnneeUniversitaireService::get_active();
+
+            if ($annee) {
+                $groupe_id
+                    ? InscriptionService::inscrire($etudiant, Groupe::findOrFail($groupe_id))
+                    : InscriptionService::desinscrire($etudiant, $annee);
+            }
+
+            return $etudiant;
+        });
     }
 
 

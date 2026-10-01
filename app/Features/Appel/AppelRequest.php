@@ -36,7 +36,7 @@ class AppelRequest extends FormRequest {
                 //======================================================================================================
                 // RG-04 : uniquement des étudiants du groupe de la séance
                 //======================================================================================================
-                Rule::exists('etudiants', 'id')
+                Rule::exists('inscriptions', 'etudiant_id')
                     ->where('groupe_id', $seance?->groupe_id)
                     ->whereNull('deleted_at'),
             ],
@@ -48,7 +48,7 @@ class AppelRequest extends FormRequest {
 
     public function messages() : array {
         return [
-            'absences.*.etudiant_id.exists'   => "Un des étudiants n'appartient pas au groupe de cette séance.",
+            'absences.*.etudiant_id.exists'   => "Un des étudiants n'est pas inscrit dans le groupe de cette séance.",
             'absences.*.etudiant_id.distinct' => "Un étudiant apparaît deux fois dans l'appel.",
             'absences.*.remarque.max'         => "Une remarque ne doit pas dépasser 255 caractères.",
         ];

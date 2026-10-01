@@ -1,5 +1,5 @@
 <template>
-    <Head :title="titre_page"/>
+    <Head :title="titre_page" />
 
     <div class="flex flex-col gap-6 p-4">
         <div class="flex items-center justify-between">
@@ -10,17 +10,16 @@
             </Button>
         </div>
 
-        <DataTable :table="table"/>
+        <DataTable :table="table" />
     </div>
 </template>
 
-
 <script setup lang="ts">
-import {Head, Link} from '@inertiajs/vue3';
-import {Button} from '@/components/ui/button';
+import { Head, Link } from '@inertiajs/vue3';
+import { Button } from '@/components/ui/button';
 import DataTable from '@/_core/table/data-table.vue';
-import type {ModeVue} from '@/_core/renders';
-import type {Table} from '@/_core/table/types';
+import type { ModeVue } from '@/_core/renders';
+import type { Table } from '@/_core/table/types';
 
 interface EtudiantListInterface {
     mode_vue: ModeVue;

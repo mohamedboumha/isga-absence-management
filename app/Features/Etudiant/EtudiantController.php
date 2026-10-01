@@ -7,6 +7,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
+use App\Features\Inscription\InscriptionService;
+use App\Features\AnneeUniversitaire\AnneeUniversitaireService;
 
 class EtudiantController extends Controller {
     const string page_list   = 'etudiant/etudiant-list';
@@ -45,10 +47,12 @@ class EtudiantController extends Controller {
             : "Nouvel étudiant";
 
         return Inertia::render(self::page_detail, [
-            'mode_vue'    => $mode_vue,
-            'titre_page'  => $titre_page,
-            'breadcrumbs' => self::get_breadcrumbs($titre_page, $etudiant->exists ? route(self::route_detail, ['cle' => $etudiant->cle]) : route(self::route_detail)),
-            'item'        => self::item_to_array($etudiant),
+            'mode_vue'     => $mode_vue,
+            'titre_page'   => $titre_page,
+            'breadcrumbs'  => self::get_breadcrumbs($titre_page, $etudiant->exists ? route(self::route_detail, ['cle' => $etudiant->cle]) : route(self::route_detail)),
+            'item'         => self::item_to_array($etudiant),
+            'annee_active' => AnneeUniversitaireService::get_active()?->libelle,
+            'historique'   => $etudiant->exists ? InscriptionService::get_historique($etudiant) : [],
             ...EtudiantService::get_selects(),
         ]);
     }
@@ -74,6 +78,7 @@ class EtudiantController extends Controller {
     protected static function item_to_array(Etudiant $etudiant) : array {
         return [
             ...$etudiant->toArray(),
+            'groupe_id'      => $etudiant->inscription_active?->groupe_id,
             'can_be_deleted' => $etudiant->exists && $etudiant->can_be_deleted(),
         ];
     }

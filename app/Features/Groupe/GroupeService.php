@@ -5,9 +5,8 @@ namespace App\Features\Groupe;
 use App\_Core\Builders\Table\TableBuilder;
 use App\_Core\Builders\Table\TableColumn;
 use App\_Core\Services\RendersService;
+use App\Features\NiveauEtude\NiveauEtudeService;
 use App\Features\AnneeUniversitaire\AnneeUniversitaireService;
-use App\Features\Filiere\FiliereService;
-use App\Features\Semestre\SemestreService;
 use Illuminate\Validation\ValidationException;
 
 class GroupeService {
@@ -17,7 +16,7 @@ class GroupeService {
     public static function get_table() : array {
         return TableBuilder
             ::new(Groupe::query()
-                        ->with(['annee_universitaire', 'filiere']))
+                        ->with(['annee_universitaire', 'niveau_etude.cycle']))
             ->add_column(
                 TableColumn
                     ::new()
@@ -30,18 +29,16 @@ class GroupeService {
             ->add_column(
                 TableColumn
                     ::new()
-                    ->label("Filière")
-                    ->nom_colonne('filiere.nom')
+                    ->label("Niveau d'études")
+                    ->nom_colonne('niveau_etude.code')
                     ->render(RendersService::render_chaine)
             )
             ->add_column(
                 TableColumn
                     ::new()
-                    ->label("Niveau")
-                    ->nom_colonne('niveau')
+                    ->label("Cycle")
+                    ->nom_colonne('niveau_etude.cycle.nom')
                     ->render(RendersService::render_chaine)
-                    ->triable()
-                    ->cherchable()
             )
             ->add_column(
                 TableColumn
@@ -73,9 +70,8 @@ class GroupeService {
     //==================================================================================================================
     public static function get_selects() : array {
         return [
-            'annees'   => SemestreService::get_annees_pour_select(),
-            'filieres' => FiliereService::get_filieres_pour_select(),
-            'niveaux'  => FiliereService::get_niveaux_pour_select(),
+            'annees'  => AnneeUniversitaireService::get_annees_pour_select(),
+            'niveaux' => NiveauEtudeService::get_niveaux_pour_select(),
         ];
     }
 
@@ -127,5 +123,27 @@ class GroupeService {
         abort_if(!$groupe, 404, "Groupe introuvable");
 
         return $groupe;
+    }
+
+
+
+    public static function get_groupes_annee_active_pour_select() : array {
+        $annee = AnneeUniversitaireService::get_active();
+
+        if (!$annee) {
+            return [];
+        }
+
+        return Groupe
+            ::query()
+            ->where('annee_universitaire_id', $annee->id)
+            ->with('niveau_etude')
+            ->orderBy('nom')
+            ->get()
+            ->map(fn(Groupe $groupe) => [
+                'valeur' => $groupe->id,
+                'label'  => "{$groupe->nom} — {$groupe->niveau_etude->libelle}",
+            ])
+            ->all();
     }
 }

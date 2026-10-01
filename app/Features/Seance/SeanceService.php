@@ -128,14 +128,13 @@ class SeanceService {
             //==========================================================================================================
             'modules'     => Module
                 ::query()
-                ->with('enseignants:id')
+                ->with(['enseignants:id', 'niveau_etude'])
                 ->orderBy('code')
                 ->get()
                 ->map(fn(Module $module) => [
                     'valeur'         => $module->id,
-                    'label'          => "{$module->code} — {$module->intitule} ({$module->semestre})",
-                    'enseignant_ids' => $module->enseignants->pluck('id')
-                                                            ->all(),
+                    'label'          => "{$module->code} — {$module->intitule} ({$module->niveau_etude->code}, S{$module->semestre})",
+                    'enseignant_ids' => $module->enseignants->pluck('id')->all(),
                 ])
                 ->all(),
             'enseignants' => Enseignant

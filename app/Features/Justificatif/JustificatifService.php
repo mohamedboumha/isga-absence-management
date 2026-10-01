@@ -139,13 +139,13 @@ class JustificatifService {
         return [
             'etudiants' => Etudiant
                 ::query()
-                ->with('groupe')
+                ->with('inscription_active.groupe')
                 ->orderBy('nom')
                 ->orderBy('prenom')
                 ->get()
                 ->map(fn(Etudiant $etudiant) => [
                     'valeur' => $etudiant->id,
-                    'label'  => "{$etudiant->nom_complet} — {$etudiant->cne} ({$etudiant->groupe->nom})",
+                    'label'  => "{$etudiant->nom_complet} — {$etudiant->cne} (" . ($etudiant->inscription_active?->groupe?->nom ?? "non inscrit") . ")",
                 ])
                 ->all(),
             'types'     => array_map(

@@ -3,7 +3,6 @@
 namespace App\Features\Seance;
 
 use App\Features\Enseignant\Enseignant;
-use App\Features\Filiere\FiliereService;
 use App\Features\Groupe\Groupe;
 use App\Features\Module\Module;
 use Illuminate\Foundation\Http\FormRequest;
@@ -83,14 +82,12 @@ class SeanceRequest extends FormRequest {
 
 
                 //======================================================================================================
-                // Le module correspond à la filière et au niveau du groupe
+                // le module appartient au niveau d'études du groupe
                 //======================================================================================================
-                if ($module->filiere_id !== $groupe->filiere_id) {
-                    $validator->errors()
-                              ->add('module_id', "Le module {$module->code} n'appartient pas à la filière du groupe {$groupe->nom}.");
-                } elseif (FiliereService::get_niveau_by_semestre($module->semestre) !== $groupe->niveau) {
-                    $validator->errors()
-                              ->add('module_id', "Le module {$module->code} ({$module->semestre}) ne correspond pas au niveau {$groupe->niveau} du groupe.");
+                if ($module->niveau_etude_id !== $groupe->niveau_etude_id) {
+                    $groupe->loadMissing('niveau_etude');
+
+                    $validator->errors()->add('module_id', "Le module {$module->code} n'est pas enseigné en {$groupe->niveau_etude->code}, le niveau du groupe {$groupe->nom}.");
                 }
 
 

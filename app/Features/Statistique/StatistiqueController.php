@@ -2,7 +2,7 @@
 
 namespace App\Features\Statistique;
 
-use App\Features\Filiere\FiliereService;
+use App\Features\Cycle\CycleService;
 use App\Features\Groupe\GroupeService;
 use App\Features\Module\Module;
 use App\Http\Controllers\Controller;
@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
 use Maatwebsite\Excel\Facades\Excel;
+use App\Features\NiveauEtude\NiveauEtudeService;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class StatistiqueController extends Controller {
@@ -30,9 +31,10 @@ class StatistiqueController extends Controller {
             'top_etudiants' => StatistiqueService::get_top_etudiants($filtres),
             'evolution'     => StatistiqueService::get_evolution_par_semaine($filtres),
             'selects'       => [
-                'filieres' => [['valeur' => '', 'label' => "Toutes"], ...FiliereService::get_filieres_pour_select()],
-                'groupes'  => [['valeur' => '', 'label' => "Tous"], ...GroupeService::get_groupes_pour_select()],
-                'modules'  => [
+                'cycles'  => [['valeur' => '', 'label' => "Tous"], ...CycleService::get_cycles_pour_select()],
+                'niveaux' => [['valeur' => '', 'label' => "Tous"], ...NiveauEtudeService::get_niveaux_pour_select()],
+                'groupes' => [['valeur' => '', 'label' => "Tous"], ...GroupeService::get_groupes_pour_select()],
+                'modules' => [
                     ['valeur' => '', 'label' => "Tous"],
                     ...Module::query()
                              ->orderBy('code')
@@ -48,11 +50,12 @@ class StatistiqueController extends Controller {
 
     protected static function get_filtres(Request $request) : array {
         $donnees = $request->validate([
-                                          'date_debut' => ['nullable', 'date'],
-                                          'date_fin'   => ['nullable', 'date', 'after_or_equal:date_debut'],
-                                          'filiere_id' => ['nullable', 'integer'],
-                                          'groupe_id'  => ['nullable', 'integer'],
-                                          'module_id'  => ['nullable', 'integer'],
+                                          'date_debut'      => ['nullable', 'date'],
+                                          'date_fin'        => ['nullable', 'date', 'after_or_equal:date_debut'],
+                                          'cycle_id'        => ['nullable', 'integer'],
+                                          'niveau_etude_id' => ['nullable', 'integer'],
+                                          'groupe_id'       => ['nullable', 'integer'],
+                                          'module_id'       => ['nullable', 'integer'],
                                       ]);
 
         return [

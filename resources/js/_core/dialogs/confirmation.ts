@@ -1,4 +1,4 @@
-import {reactive} from 'vue';
+import { reactive } from 'vue';
 
 export interface DemandeConfirmation {
     titre: string;
@@ -36,7 +36,9 @@ export const etat_confirmation = reactive<EtatConfirmation>({
 //==============================================================================================================
 // Ouvre le dialogue ; la promesse se résout quand l'utilisateur répond
 //==============================================================================================================
-export function demander_confirmation(demande: DemandeConfirmation): Promise<ReponseConfirmation> {
+export function demander_confirmation(
+    demande: DemandeConfirmation,
+): Promise<ReponseConfirmation> {
     return new Promise((resoudre) => {
         Object.assign(etat_confirmation, {
             message: undefined,
@@ -57,5 +59,5 @@ export function repondre_confirmation(confirme: boolean): void {
     etat_confirmation.ouvert = false;
     etat_confirmation.resoudre = null;
 
-    resoudre?.({confirme, valeur: etat_confirmation.valeur.trim()});
+    resoudre?.({ confirme, valeur: etat_confirmation.valeur.trim() });
 }

@@ -1,6 +1,6 @@
-import {router} from '@inertiajs/vue3';
-import {toast} from 'vue-sonner';
-import {demander_confirmation} from './confirmation';
+import { router } from '@inertiajs/vue3';
+import { toast } from 'vue-sonner';
+import { demander_confirmation } from './confirmation';
 
 //==============================================================================================================
 // Erreur renvoyée par le serveur (ex. suppression refusée) : notification rouge avec le premier message
@@ -16,8 +16,12 @@ export function afficher_erreurs(errors: Record<string, string>): void {
 //==============================================================================================================
 // Suppression avec confirmation : "Supprimer" en rouge, erreurs éventuelles en notification
 //==============================================================================================================
-export async function supprimer_avec_confirmation(url: string, titre: string, message: string): Promise<void> {
-    const {confirme} = await demander_confirmation({
+export async function supprimer_avec_confirmation(
+    url: string,
+    titre: string,
+    message: string,
+): Promise<void> {
+    const { confirme } = await demander_confirmation({
         titre,
         message,
         bouton: 'Supprimer',
@@ -28,5 +32,5 @@ export async function supprimer_avec_confirmation(url: string, titre: string, me
         return;
     }
 
-    router.delete(url, {onError: afficher_erreurs});
+    router.delete(url, { onError: afficher_erreurs });
 }

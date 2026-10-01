@@ -1,5 +1,5 @@
 <template>
-    <Head :title="titre_page"/>
+    <Head :title="titre_page" />
 
     <div class="flex max-w-2xl flex-col gap-6 p-4">
         <!--=====================================================================================================-->
@@ -13,7 +13,12 @@
                 class="flex gap-2"
             >
                 <Button as-child variant="outline">
-                    <a :href="`${url_detail}/rapport`" target="_blank" rel="noopener">Rapport PDF</a>
+                    <a
+                        :href="`${url_detail}/rapport`"
+                        target="_blank"
+                        rel="noopener"
+                        >Rapport PDF</a
+                    >
                 </Button>
 
                 <Button as-child variant="outline">
@@ -24,9 +29,8 @@
                     v-if="item.can_be_deleted"
                     variant="destructive"
                     @click="supprimer"
-                >Supprimer
-                </Button
-                >
+                    >Supprimer
+                </Button>
             </div>
         </div>
 
@@ -45,37 +49,21 @@
                 :error="form.errors.annee_universitaire_id"
             />
 
-            <div class="grid grid-cols-3 gap-4">
-                <div class="col-span-2">
-                    <ChampSelect
-                        :mode_vue="mode_vue"
-                        nom_champ="filiere_id"
-                        label="Filière"
-                        placeholder="Choisir une filière"
-                        required
-                        :options="filieres"
-                        v-model:valeur="form.filiere_id"
-                        :error="form.errors.filiere_id"
-                    />
-                </div>
-
-                <ChampSelect
-                    :mode_vue="mode_vue"
-                    nom_champ="niveau"
-                    label="Niveau"
-                    placeholder="Niveau"
-                    required
-                    :options="niveaux"
-                    v-model:valeur="form.niveau"
-                    :error="form.errors.niveau"
-                />
-            </div>
+            <ChampSelect
+                :mode_vue="mode_vue"
+                nom_champ="niveau_etude_id"
+                label="Niveau d'études"
+                placeholder="Choisir un niveau"
+                required
+                :options="niveaux"
+                v-model:valeur="form.niveau_etude_id"
+                :error="form.errors.niveau_etude_id"
+            />
 
             <ChampChaine
                 :mode_vue="mode_vue"
                 nom_champ="nom"
                 label="Nom du groupe"
-                placeholder="GI-L3-A"
                 required
                 v-model:valeur="form.nom"
                 :error="form.errors.nom"
@@ -86,9 +74,8 @@
             <!--=================================================================================================-->
             <div v-if="is_editable" class="flex gap-2">
                 <Button type="submit" :disabled="form.processing"
-                >Enregistrer
-                </Button
-                >
+                    >Enregistrer
+                </Button>
 
                 <Button as-child variant="outline">
                     <Link :href="url_annuler">Annuler</Link>
@@ -99,20 +86,19 @@
 </template>
 
 <script setup lang="ts">
-import {computed} from 'vue';
-import {Head, Link, router, useForm} from '@inertiajs/vue3';
-import {Button} from '@/components/ui/button';
+import { computed } from 'vue';
+import { Head, Link, useForm } from '@inertiajs/vue3';
+import { Button } from '@/components/ui/button';
 import ChampChaine from '@/_core/renders/champ-chaine.vue';
 import ChampSelect from '@/_core/renders/champ-select.vue';
-import {renders, type ModeVue} from '@/_core/renders';
-import type {SelectOption} from '@/_core/renders/types';
-import {supprimer_avec_confirmation} from "@/_core/dialogs/actions";
+import { renders, type ModeVue } from '@/_core/renders';
+import type { SelectOption } from '@/_core/renders/types';
+import { supprimer_avec_confirmation } from '@/_core/dialogs/actions';
 
 interface Groupe {
     cle: string | null;
     annee_universitaire_id: number | null;
-    filiere_id: number | null;
-    niveau: string | null;
+    niveau_etude_id: number | null;
     nom: string | null;
     can_be_deleted: boolean;
 }
@@ -122,7 +108,6 @@ interface GroupeDetailInterface {
     titre_page: string;
     item: Groupe;
     annees: SelectOption[];
-    filieres: SelectOption[];
     niveaux: SelectOption[];
 }
 
@@ -133,8 +118,7 @@ const props = defineProps<GroupeDetailInterface>();
 //==============================================================================================================
 const form = useForm({
     annee_universitaire_id: props.item.annee_universitaire_id ?? null,
-    filiere_id: props.item.filiere_id ?? null,
-    niveau: props.item.niveau ?? null,
+    niveau_etude_id: props.item.niveau_etude_id ?? null,
     nom: props.item.nom ?? '',
 });
 
@@ -155,7 +139,7 @@ const url_annuler =
 //==============================================================================================================
 // Actions
 //==============================================================================================================
-const enregistrer = () => form.post(url_detail, {preserveState: 'errors'});
+const enregistrer = () => form.post(url_detail, { preserveState: 'errors' });
 
 const supprimer = () =>
     supprimer_avec_confirmation(

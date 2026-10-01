@@ -74,7 +74,6 @@ class ModuleController extends Controller {
     protected static function item_to_array(Module $module) : array {
         return [
             ...$module->toArray(),
-            'niveau'         => $module->niveau,
             'can_be_deleted' => $module->exists && $module->can_be_deleted(),
         ];
     }

@@ -1,5 +1,5 @@
 <template>
-    <Head :title="titre_page"/>
+    <Head :title="titre_page" />
 
     <div class="flex max-w-2xl flex-col gap-6 p-4">
         <!--=====================================================================================================-->
@@ -9,26 +9,46 @@
             <div>
                 <h1 class="text-xl font-semibold">{{ titre_page }}</h1>
 
-                <p v-if="mode_vue === renders.mode_consultation" class="text-muted-foreground text-sm">
+                <p
+                    v-if="mode_vue === renders.mode_consultation"
+                    class="text-sm text-muted-foreground"
+                >
                     Compte de connexion :
-                    <span :class="item.compte_actif ? 'text-green-700' : 'text-destructive'">
+                    <span
+                        :class="
+                            item.compte_actif
+                                ? 'text-green-700'
+                                : 'text-destructive'
+                        "
+                    >
                         {{ item.compte_actif ? 'actif' : 'désactivé' }}
                     </span>
                 </p>
             </div>
 
-            <div v-if="mode_vue === renders.mode_consultation" class="flex gap-2">
+            <div
+                v-if="mode_vue === renders.mode_consultation"
+                class="flex gap-2"
+            >
                 <Button as-child variant="outline">
                     <Link :href="`${url_detail}/edit`">Modifier</Link>
                 </Button>
 
-                <Button v-if="item.can_be_deleted" variant="destructive" @click="supprimer">Supprimer</Button>
+                <Button
+                    v-if="item.can_be_deleted"
+                    variant="destructive"
+                    @click="supprimer"
+                    >Supprimer</Button
+                >
             </div>
         </div>
 
-        <p v-if="mode_vue === renders.mode_create" class="bg-muted rounded-md p-3 text-sm">
-            Un compte de connexion sera créé avec cet e-mail. L'enseignant recevra un lien pour choisir son mot de
-            passe.
+        <p
+            v-if="mode_vue === renders.mode_create"
+            class="rounded-md bg-muted p-3 text-sm"
+        >
+            Un compte de connexion sera créé avec cet e-mail. L'enseignant
+            recevra un lien pour choisir son mot de passe.
         </p>
 
         <!--=====================================================================================================-->
@@ -89,7 +109,9 @@
             <!-- Boutons (create / edit uniquement) -->
             <!--=================================================================================================-->
             <div v-if="is_editable" class="flex gap-2">
-                <Button type="submit" :disabled="form.processing">Enregistrer</Button>
+                <Button type="submit" :disabled="form.processing"
+                    >Enregistrer</Button
+                >
 
                 <Button as-child variant="outline">
                     <Link :href="url_annuler">Annuler</Link>
@@ -99,16 +121,15 @@
     </div>
 </template>
 
-
 <script setup lang="ts">
-import {computed} from 'vue';
-import {Head, Link, router, useForm} from '@inertiajs/vue3';
-import {Button} from '@/components/ui/button';
+import { computed } from 'vue';
+import { Head, Link, router, useForm } from '@inertiajs/vue3';
+import { Button } from '@/components/ui/button';
 import ChampChaine from '@/_core/renders/champ-chaine.vue';
 import ChampMultiSelect from '@/_core/renders/champ-multi-select.vue';
-import {renders, type ModeVue} from '@/_core/renders';
-import type {SelectOption} from '@/_core/renders/types';
-import {supprimer_avec_confirmation} from "@/_core/dialogs/actions";
+import { renders, type ModeVue } from '@/_core/renders';
+import type { SelectOption } from '@/_core/renders/types';
+import { supprimer_avec_confirmation } from '@/_core/dialogs/actions';
 
 interface Enseignant {
     cle: string | null;
@@ -141,19 +162,26 @@ const form = useForm({
     modules: props.item.modules ?? [],
 });
 
-const is_editable = computed(() => props.mode_vue === renders.mode_create || props.mode_vue === renders.mode_edit);
+const is_editable = computed(
+    () =>
+        props.mode_vue === renders.mode_create ||
+        props.mode_vue === renders.mode_edit,
+);
 
 //==============================================================================================================
 // URLs
 //==============================================================================================================
 const url_list = '/enseignants';
-const url_detail = props.item.cle ? `/enseignant/${props.item.cle}` : '/enseignant';
-const url_annuler = props.mode_vue === renders.mode_edit ? url_detail : url_list;
+const url_detail = props.item.cle
+    ? `/enseignant/${props.item.cle}`
+    : '/enseignant';
+const url_annuler =
+    props.mode_vue === renders.mode_edit ? url_detail : url_list;
 
 //==============================================================================================================
 // Actions
 //==============================================================================================================
-const enregistrer = () => form.post(url_detail, {preserveState: 'errors'});
+const enregistrer = () => form.post(url_detail, { preserveState: 'errors' });
 
 const supprimer = () =>
     supprimer_avec_confirmation(

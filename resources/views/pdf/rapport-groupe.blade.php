@@ -7,12 +7,9 @@
 
     <table class="infos">
         <tr>
-            <td class="label">Filière</td>
-            <td>{{ $groupe->filiere->nom }}</td>
-            <td class="label">Niveau</td>
-            <td>{{ $groupe->niveau }}</td>
-            <td class="label">Année</td>
-            <td>{{ $groupe->annee_universitaire->libelle }}</td>
+            <td class="label">Niveau</td><td>{{ $groupe->niveau_etude->libelle }}</td>
+            <td class="label">Cycle</td><td>{{ $groupe->niveau_etude->cycle->nom }}</td>
+            <td class="label">Année</td><td>{{ $groupe->annee_universitaire->libelle }}</td>
         </tr>
         <tr>
             <td class="label">Période</td>

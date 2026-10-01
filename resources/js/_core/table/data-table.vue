@@ -4,9 +4,15 @@
         <!-- Recherche -->
         <!--=====================================================================================================-->
         <div class="flex items-center justify-between gap-2">
-            <Input v-model="search" placeholder="Rechercher..." class="max-w-xs"/>
+            <Input
+                v-model="search"
+                placeholder="Rechercher..."
+                class="max-w-xs"
+            />
 
-            <Button variant="outline" size="sm" @click="exporter">Exporter (Excel)</Button>
+            <Button variant="outline" size="sm" @click="exporter"
+                >Exporter (Excel)</Button
+            >
         </div>
 
         <!--=====================================================================================================-->
@@ -15,53 +21,53 @@
         <div class="overflow-x-auto rounded-lg border">
             <table class="w-full text-sm">
                 <thead class="bg-muted/50 text-left">
-                <tr>
-                    <th
-                        v-for="header in table.headers"
-                        :key="header.nom_colonne"
-                        class="px-4 py-3 font-medium select-none"
-                        :class="{
+                    <tr>
+                        <th
+                            v-for="header in table.headers"
+                            :key="header.nom_colonne"
+                            class="px-4 py-3 font-medium select-none"
+                            :class="{
                                 'cursor-pointer hover:text-foreground':
                                     header.triable,
                             }"
-                        @click="trier(header)"
-                    >
-                        {{ header.label }}
-                        <span class="text-xs">{{ icone_tri(header) }}</span>
-                    </th>
-                </tr>
+                            @click="trier(header)"
+                        >
+                            {{ header.label }}
+                            <span class="text-xs">{{ icone_tri(header) }}</span>
+                        </th>
+                    </tr>
                 </thead>
 
                 <tbody>
-                <tr
-                    v-for="item in table.items"
-                    :key="item.cle"
-                    class="border-t hover:bg-muted/30"
-                    :class="{ 'cursor-pointer': item.url }"
-                    @click="item.url && router.visit(item.url)"
-                >
-                    <td
-                        v-for="header in table.headers"
-                        :key="header.nom_colonne"
-                        class="px-4 py-3"
+                    <tr
+                        v-for="item in table.items"
+                        :key="item.cle"
+                        class="border-t hover:bg-muted/30"
+                        :class="{ 'cursor-pointer': item.url }"
+                        @click="item.url && router.visit(item.url)"
                     >
-                        <component
-                            :is="composants[header.render]"
-                            :mode_vue="renders.mode_list"
-                            :nom_champ="header.nom_colonne"
-                            :valeur="item.valeurs[header.nom_colonne]"
-                        />
-                    </td>
-                </tr>
+                        <td
+                            v-for="header in table.headers"
+                            :key="header.nom_colonne"
+                            class="px-4 py-3"
+                        >
+                            <component
+                                :is="composants[header.render]"
+                                :mode_vue="renders.mode_list"
+                                :nom_champ="header.nom_colonne"
+                                :valeur="item.valeurs[header.nom_colonne]"
+                            />
+                        </td>
+                    </tr>
 
-                <tr v-if="!table.items.length">
-                    <td
-                        :colspan="table.headers.length"
-                        class="px-4 py-8 text-center text-muted-foreground"
-                    >
-                        Aucun résultat
-                    </td>
-                </tr>
+                    <tr v-if="!table.items.length">
+                        <td
+                            :colspan="table.headers.length"
+                            class="px-4 py-8 text-center text-muted-foreground"
+                        >
+                            Aucun résultat
+                        </td>
+                    </tr>
                 </tbody>
             </table>
         </div>
@@ -85,7 +91,7 @@
                 </Button>
 
                 <span
-                >Page {{ table.pagination.page }} /
+                    >Page {{ table.pagination.page }} /
                     {{ table.pagination.last_page }}</span
                 >
 
@@ -105,16 +111,16 @@
 </template>
 
 <script setup lang="ts">
-import {ref, watch} from 'vue';
-import {router} from '@inertiajs/vue3';
-import {Button} from '@/components/ui/button';
-import {Input} from '@/components/ui/input';
+import { ref, watch } from 'vue';
+import { router } from '@inertiajs/vue3';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import ChampBoolean from '@/_core/renders/champ-boolean.vue';
 import ChampChaine from '@/_core/renders/champ-chaine.vue';
 import ChampDate from '@/_core/renders/champ-date.vue';
 import ChampNombre from '@/_core/renders/champ-nombre.vue';
-import {renders} from '@/_core/renders';
-import type {Table, TableHeader} from './types';
+import { renders } from '@/_core/renders';
+import type { Table, TableHeader } from './types';
 
 const props = defineProps<{ table: Table }>();
 
@@ -135,7 +141,9 @@ const recharger = (params: Record<string, any>) => {
     //==========================================================================================================
     // On garde les paramètres déjà présents dans l'URL (ex. ?statut=VALIDE), puis ceux du tableau
     //==========================================================================================================
-    const params_url = Object.fromEntries(new URLSearchParams(window.location.search));
+    const params_url = Object.fromEntries(
+        new URLSearchParams(window.location.search),
+    );
 
     router.get(
         window.location.pathname,
@@ -147,7 +155,7 @@ const recharger = (params: Record<string, any>) => {
             page: props.table.pagination.page,
             ...params,
         },
-        {preserveState: true, preserveScroll: true, replace: true},
+        { preserveState: true, preserveScroll: true, replace: true },
     );
 };
 
@@ -171,7 +179,7 @@ let timer: ReturnType<typeof setTimeout>;
 watch(search, (valeur) => {
     clearTimeout(timer);
     timer = setTimeout(
-        () => recharger({search: valeur || undefined, page: 1}),
+        () => recharger({ search: valeur || undefined, page: 1 }),
         300,
     );
 });

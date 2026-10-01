@@ -11,14 +11,14 @@ return new class extends Migration {
             $table->string('cle', 32)
                   ->unique();
 
-            $table->foreignId('filiere_id')
-                  ->constrained('filieres')
+            $table->foreignId('niveau_etude_id')
+                  ->constrained('niveaux_etudes')
                   ->restrictOnDelete();
 
             $table->string('code', 15)
                   ->unique();          // ex. GI-BDD
             $table->string('intitule', 150);               // ex. Bases de données
-            $table->string('semestre', 3);                 // S1 ... S10
+            $table->unsignedTinyInteger('semestre');       // 1 à nb_semestres du niveau d'études
             $table->unsignedSmallInteger('volume_horaire'); // en heures
 
             $table->timestamps();

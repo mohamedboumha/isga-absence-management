@@ -54,6 +54,17 @@ class AnneeUniversitaireService {
 
 
 
+    public static function get_annees_pour_select() : array {
+        return AnneeUniversitaire
+            ::query()
+            ->orderByDesc('date_debut')
+            ->get()
+            ->map(fn(AnneeUniversitaire $annee) => ['valeur' => $annee->id, 'label' => $annee->libelle])
+            ->all();
+    }
+
+
+
     //==================================================================================================================
     // Suppression logique (soft delete), refusée si le model l'interdit
     //==================================================================================================================
@@ -61,9 +72,10 @@ class AnneeUniversitaireService {
         $annee = self::get_or_fail($cle);
 
         if (!$annee->can_be_deleted()) {
-            throw ValidationException::withMessages([
-                                                        'annee' => "L'année {$annee->libelle} ne peut pas être supprimée (elle est active ou contient des semestres ou des groupes).",
-                                                    ]);
+            throw ValidationException::withMessages(
+                [
+                    'annee' => "L'année {$annee->libelle} ne peut pas être supprimée (elle est active ou contient des groupes).",
+                ]);
         }
 
         $annee->delete();

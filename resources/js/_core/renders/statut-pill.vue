@@ -3,11 +3,13 @@
         class="inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-xs font-medium whitespace-nowrap ring-1 ring-inset"
         :class="classes[definition.tonalite]"
     >
-        <span class="size-1.5 shrink-0 rounded-full bg-current" aria-hidden="true" />
+        <span
+            class="size-1.5 shrink-0 rounded-full bg-current"
+            aria-hidden="true"
+        />
         {{ label ?? definition.label }}
     </span>
 </template>
-
 
 <script setup lang="ts">
 import { computed } from 'vue';
@@ -20,7 +22,9 @@ interface StatutPillInterface {
 
 const props = defineProps<StatutPillInterface>();
 
-const definition = computed<StatutDefinition>(() => statuts[props.statut] ?? { tonalite: 'neutre', label: props.statut });
+const definition = computed<StatutDefinition>(
+    () => statuts[props.statut] ?? { tonalite: 'neutre', label: props.statut },
+);
 
 //==============================================================================================================
 // Fond teinté à 10 %, bordure à 25 %, texte et pastille dans la couleur du statut

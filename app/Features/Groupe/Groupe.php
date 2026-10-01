@@ -3,27 +3,27 @@
 namespace App\Features\Groupe;
 
 use App\_Core\Base\BaseModel;
-use App\Features\Seance\Seance;
-use App\Features\Etudiant\Etudiant;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Features\AnneeUniversitaire\AnneeUniversitaire;
-use App\Features\Filiere\Filiere;
-use App\Features\Filiere\FiliereService;
+use App\Features\Etudiant\Etudiant;
+use App\Features\NiveauEtude\NiveauEtude;
+use App\Features\Seance\Seance;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Features\Inscription\Inscription;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 /**
  * @property int $id
  * @property string $cle
  * @property int $annee_universitaire_id
- * @property int $filiere_id
- * @property string $niveau
+ * @property int $niveau_etude_id
  * @property string $nom
  * @property AnneeUniversitaire $annee_universitaire
- * @property Filiere $filiere
+ * @property NiveauEtude $niveau_etude
  *
  * @method static Builder by_annee(?AnneeUniversitaire $annee)
- * @method static Builder by_filiere(?Filiere $filiere)
+ * @method static Builder by_niveau(?NiveauEtude $niveau)
  */
 class Groupe extends BaseModel {
     protected $table = 'groupes';
@@ -40,14 +40,25 @@ class Groupe extends BaseModel {
 
 
 
-    public function filiere() : BelongsTo {
-        return $this->belongsTo(Filiere::class, 'filiere_id');
+    public function niveau_etude() : BelongsTo {
+        return $this->belongsTo(NiveauEtude::class, 'niveau_etude_id');
     }
 
 
 
-    public function etudiants() : HasMany {
-        return $this->hasMany(Etudiant::class, 'groupe_id');
+    public function inscriptions() : HasMany {
+        return $this->hasMany(Inscription::class, 'groupe_id');
+    }
+
+
+
+    //==================================================================================================================
+    // Les étudiants inscrits dans ce groupe (donc pour l'année de ce groupe)
+    //==================================================================================================================
+    public function etudiants() : BelongsToMany {
+        return $this
+            ->belongsToMany(Etudiant::class, 'inscriptions', 'groupe_id', 'etudiant_id')
+            ->wherePivotNull('deleted_at');
     }
 
 
@@ -65,29 +76,27 @@ class Groupe extends BaseModel {
     //[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][]
     public static function faker(array $params) : array {
         /** @var AnneeUniversitaire $annee */
-        /** @var Filiere $filiere */
-        $annee   = $params['annee'];
-        $filiere = $params['filiere'];
-        $niveau  = $params['niveau'] ?? fake()->randomElement(FiliereService::niveaux);
+        $annee = $params['annee'];
+
+        /** @var NiveauEtude $niveau */
+        $niveau = $params['niveau'];
 
 
         //==============================================================================================================
-        // Nom libre : GI-L3-A, sinon GI-L3-B, GI-L3-C...
+        // Nom libre : 3CI-IABD-A, sinon 3CI-IABD-B...
         //==============================================================================================================
-        $noms_pris = static
-            ::withTrashed()
-            ->where('annee_universitaire_id', $annee->id)
-            ->pluck('nom')
-            ->all();
+        $noms_pris = static::withTrashed()
+                           ->where('annee_universitaire_id', $annee->id)
+                           ->pluck('nom')
+                           ->all();
 
         $nom = collect(range('A', 'Z'))
-            ->map(fn(string $lettre) => "{$filiere->code}-{$niveau}-{$lettre}")
+            ->map(fn(string $lettre) => "{$niveau->code}-{$lettre}")
             ->first(fn(string $nom) => !in_array($nom, $noms_pris, true));
 
         return [
             'annee_universitaire_id' => $annee->id,
-            'filiere_id'             => $filiere->id,
-            'niveau'                 => $niveau,
+            'niveau_etude_id'        => $niveau->id,
             'nom'                    => $nom,
         ];
     }
@@ -95,9 +104,7 @@ class Groupe extends BaseModel {
 
 
     public function can_be_deleted() : bool {
-        return !$this->etudiants()
-                     ->exists() && !$this->seances()
-                                         ->exists();
+        return !$this->inscriptions()->exists() && !$this->seances()->exists();
     }
 
 
@@ -112,7 +119,7 @@ class Groupe extends BaseModel {
 
 
 
-    public function scopeBy_filiere(Builder $query, ?Filiere $filiere) : Builder {
-        return $query->when($filiere, fn(Builder $query) => $query->where('filiere_id', $filiere->id));
+    public function scopeBy_niveau(Builder $query, ?NiveauEtude $niveau) : Builder {
+        return $query->when($niveau, fn(Builder $query) => $query->where('niveau_etude_id', $niveau->id));
     }
 }

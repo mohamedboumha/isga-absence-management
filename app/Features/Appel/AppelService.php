@@ -112,9 +112,9 @@ class AppelService {
             ->get()
             ->keyBy('etudiant_id');
 
-        return Etudiant
-            ::query()
-            ->where('groupe_id', $seance->groupe_id)
+        return $seance
+            ->groupe
+            ->etudiants()
             ->orderBy('nom')
             ->orderBy('prenom')
             ->get()

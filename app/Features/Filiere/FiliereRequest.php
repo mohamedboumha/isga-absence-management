@@ -42,6 +42,8 @@ class FiliereRequest extends FormRequest {
                     ->ignore($cle, 'cle'),
             ],
             'description' => ['nullable', 'max:2000'],
+            'cycle_id'    => ['required', Rule::exists('cycles', 'id')
+                                              ->whereNull('deleted_at')],
         ];
     }
 
@@ -49,13 +51,14 @@ class FiliereRequest extends FormRequest {
 
     public function messages() : array {
         return [
-            'code.required'   => "Le code est obligatoire.",
-            'code.regex'      => "Le code doit contenir 2 à 10 lettres, chiffres ou tirets (ex. GI).",
-            'code.unique'     => "Ce code est déjà utilisé par une autre filière.",
-            'nom.required'    => "Le nom est obligatoire.",
-            'nom.max'         => "Le nom ne doit pas dépasser 150 caractères.",
-            'nom.unique'      => "Une filière porte déjà ce nom.",
-            'description.max' => "La description ne doit pas dépasser 2000 caractères.",
+            'code.required'     => "Le code est obligatoire.",
+            'code.regex'        => "Le code doit contenir 2 à 10 lettres, chiffres ou tirets (ex. GI).",
+            'code.unique'       => "Ce code est déjà utilisé par une autre filière.",
+            'nom.required'      => "Le nom est obligatoire.",
+            'nom.max'           => "Le nom ne doit pas dépasser 150 caractères.",
+            'nom.unique'        => "Une filière porte déjà ce nom.",
+            'description.max'   => "La description ne doit pas dépasser 2000 caractères.",
+            'cycle_id.required' => "Le cycle est obligatoire.",
         ];
     }
 }

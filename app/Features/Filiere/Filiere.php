@@ -3,9 +3,10 @@
 namespace App\Features\Filiere;
 
 use App\_Core\Base\BaseModel;
-use App\Features\Groupe\Groupe;
-use App\Features\Module\Module;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Features\Cycle\Cycle;
+use App\Features\NiveauEtude\NiveauEtude;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * @property int $id
@@ -13,6 +14,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $code
  * @property string $nom
  * @property string|null $description
+ * @property int $cycle_id
+ * @property Cycle $cycle
  */
 class Filiere extends BaseModel {
     protected $table = 'filieres';
@@ -25,22 +28,20 @@ class Filiere extends BaseModel {
     // RELATIONS
     //
     //[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][]
-    public function groupes() : HasMany {
-        return $this->hasMany(Groupe::class, 'filiere_id');
+    public function cycle() : BelongsTo {
+        return $this->belongsTo(Cycle::class, 'cycle_id');
     }
 
 
 
-    public function modules() : HasMany {
-        return $this->hasMany(Module::class, 'filiere_id');
+    public function niveaux() : HasMany {
+        return $this->hasMany(NiveauEtude::class, 'filiere_id');
     }
 
 
 
     public function can_be_deleted() : bool {
-        return !$this->groupes()
-                     ->exists() && !$this->modules()
-                                         ->exists();
+        return !$this->niveaux()->exists();
     }
 
 
@@ -72,6 +73,7 @@ class Filiere extends BaseModel {
             'code'        => $code,
             'nom'         => $filieres[$code],
             'description' => fake('fr_FR')->sentence(12),
+            'cycle_id'    => ($params['cycle'] ?? Cycle::query()->firstOrFail())->id,
         ];
     }
 }

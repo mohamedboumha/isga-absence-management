@@ -3,28 +3,27 @@
 namespace App\Features\Module;
 
 use App\_Core\Base\BaseModel;
-use App\Features\Seance\Seance;
-use App\Features\Filiere\Filiere;
 use App\Features\Enseignant\Enseignant;
-use App\Features\Filiere\FiliereService;
+use App\Features\NiveauEtude\NiveauEtude;
+use App\Features\Seance\Seance;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * @property int $id
  * @property string $cle
- * @property int $filiere_id
+ * @property int $niveau_etude_id
  * @property string $code
  * @property string $intitule
- * @property string $semestre
+ * @property int $semestre
  * @property int $volume_horaire
- * @property Filiere $filiere
- * @property-read string|null $niveau
+ * @property NiveauEtude $niveau_etude
+ * @property-read string $semestre_render
  *
- * @method static Builder by_filiere(?Filiere $filiere)
+ * @method static Builder by_niveau(?NiveauEtude $niveau)
  */
 class Module extends BaseModel {
     protected $table = 'modules';
@@ -36,6 +35,7 @@ class Module extends BaseModel {
     protected function casts() : array {
         return [
             ...parent::casts(),
+            'semestre'       => 'integer',
             'volume_horaire' => 'integer',
         ];
     }
@@ -47,8 +47,14 @@ class Module extends BaseModel {
     // RELATIONS
     //
     //[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][]
-    public function filiere() : BelongsTo {
-        return $this->belongsTo(Filiere::class, 'filiere_id');
+    public function niveau_etude() : BelongsTo {
+        return $this->belongsTo(NiveauEtude::class, 'niveau_etude_id');
+    }
+
+
+
+    public function enseignants() : BelongsToMany {
+        return $this->belongsToMany(Enseignant::class, 'enseignant_module', 'module_id', 'enseignant_id');
     }
 
 
@@ -59,20 +65,13 @@ class Module extends BaseModel {
 
 
 
-    public function enseignants() : BelongsToMany {
-        return $this->belongsToMany(Enseignant::class, 'enseignant_module', 'module_id', 'enseignant_id');
-    }
-
     //[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][]
     //
     // ATTRIBUTES
     //
     //[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][]
-    protected function niveau() : Attribute {
-        //==============================================================================================================
-        // $module->niveau  =>  "L3" pour un module de S5
-        //==============================================================================================================
-        return Attribute::get(fn() => FiliereService::get_niveau_by_semestre($this->semestre));
+    protected function semestreRender() : Attribute {
+        return Attribute::get(fn() => "Semestre {$this->semestre}");
     }
 
 
@@ -83,42 +82,32 @@ class Module extends BaseModel {
     //
     //[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][]
     public static function faker(array $params) : array {
-        /** @var Filiere $filiere */
-        $filiere = $params['filiere'];
+        /** @var NiveauEtude $niveau */
+        $niveau = $params['niveau'];
 
         $intitules = [
-            'ALGO' => "Algorithmique",
-            'BDD'  => "Bases de données",
-            'WEB'  => "Développement web",
-            'RES'  => "Réseaux informatiques",
-            'SYS'  => "Systèmes d'exploitation",
-            'POO'  => "Programmation orientée objet",
-            'MATH' => "Mathématiques",
-            'STAT' => "Statistiques",
-            'ANG'  => "Anglais",
-            'COM'  => "Communication",
-            'GPR'  => "Gestion de projet",
-            'DRT'  => "Droit",
+            "Algorithmique", "Bases de données", "Développement web", "Réseaux informatiques",
+            "Systèmes d'exploitation", "Programmation orientée objet", "Mathématiques", "Statistiques",
+            "Anglais", "Communication", "Gestion de projet", "Droit",
         ];
 
-
         //==============================================================================================================
-        // Un code libre : GI-BDD, GC-MATH...
+        // Code libre : 3CI-IABD-01, 3CI-IABD-02...
         //==============================================================================================================
         $codes_pris = static::withTrashed()
                             ->pluck('code')
                             ->all();
 
-        $abreviation = collect(array_keys($intitules))
-            ->shuffle()
-            ->first(fn(string $abreviation) => !in_array("{$filiere->code}-{$abreviation}", $codes_pris, true));
+        $code = collect(range(1, 99))
+            ->map(fn(int $numero) => sprintf('%s-%02d', $niveau->code, $numero))
+            ->first(fn(string $code) => !in_array($code, $codes_pris, true));
 
         return [
-            'filiere_id'     => $filiere->id,
-            'code'           => "{$filiere->code}-{$abreviation}",
-            'intitule'       => $intitules[$abreviation],
-            'semestre'       => $params['semestre'] ?? fake()->randomElement(FiliereService::semestres),
-            'volume_horaire' => fake()->randomElement([24, 30, 36, 42, 48]),
+            'niveau_etude_id' => $niveau->id,
+            'code'            => $code,
+            'intitule'        => $params['intitule'] ?? fake()->randomElement($intitules),
+            'semestre'        => $params['semestre'] ?? fake()->numberBetween(1, $niveau->nb_semestres),
+            'volume_horaire'  => fake()->randomElement([24, 30, 36, 42, 48]),
         ];
     }
 
@@ -136,7 +125,7 @@ class Module extends BaseModel {
     // SCOPES
     //
     //[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][]
-    public function scopeBy_filiere(Builder $query, ?Filiere $filiere) : Builder {
-        return $query->when($filiere, fn(Builder $query) => $query->where('filiere_id', $filiere->id));
+    public function scopeBy_niveau(Builder $query, ?NiveauEtude $niveau) : Builder {
+        return $query->when($niveau, fn(Builder $query) => $query->where('niveau_etude_id', $niveau->id));
     }
 }

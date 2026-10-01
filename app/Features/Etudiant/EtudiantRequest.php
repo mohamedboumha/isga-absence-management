@@ -4,6 +4,7 @@ namespace App\Features\Etudiant;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use App\Features\AnneeUniversitaire\AnneeUniversitaireService;
 
 class EtudiantRequest extends FormRequest {
     public function authorize() : bool {
@@ -30,9 +31,10 @@ class EtudiantRequest extends FormRequest {
 
         return [
             'groupe_id'      => [
-                'required',
+                'nullable',
                 Rule::exists('groupes', 'id')
-                    ->whereNull('deleted_at'),
+                    ->whereNull('deleted_at')
+                    ->where('annee_universitaire_id', AnneeUniversitaireService::get_active()?->id),
             ],
             'cne'            => [
                 'required',
@@ -58,8 +60,7 @@ class EtudiantRequest extends FormRequest {
 
     public function messages() : array {
         return [
-            'groupe_id.required'    => "Le groupe est obligatoire.",
-            'groupe_id.exists'      => "Ce groupe n'existe pas.",
+            'groupe_id.exists'      => "Ce groupe n'appartient pas à l'année universitaire active.",
             'cne.required'          => "Le CNE est obligatoire.",
             'cne.regex'             => "Le CNE doit être une lettre suivie de 9 chiffres (ex. R130245678).",
             'cne.unique'            => "Ce CNE est déjà attribué à un autre étudiant.",

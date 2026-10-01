@@ -8,9 +8,10 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-    --font-sans: 'Schibsted Grotesk', ui-sans-serif, system-ui, sans-serif,
-    'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
-    'Noto Color Emoji';
+    --font-sans:
+        'Schibsted Grotesk', ui-sans-serif, system-ui, sans-serif,
+        'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
+        'Noto Color Emoji';
 
     --radius-lg: var(--radius);
     --radius-md: calc(var(--radius) - 2px);
@@ -88,114 +89,115 @@
 @layer utilities {
     body,
     html {
-        --font-sans: 'Schibsted Grotesk', ui-sans-serif, system-ui, sans-serif,
-        'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
-        'Noto Color Emoji';
+        --font-sans:
+            'Schibsted Grotesk', ui-sans-serif, system-ui, sans-serif,
+            'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
+            'Noto Color Emoji';
     }
 }
 
 :root {
     /* Identité ISGA (couleurs exactes du logo) */
-    --isga-rouge: #D91D36;
-    --isga-gris: #5E5E5D;
+    --isga-rouge: #d91d36;
+    --isga-gris: #5e5e5d;
 
     /* Statuts : la couleur porte un sens, jamais de la décoration */
-    --present: #0F7B6C;
-    --absent: #D91D36;
-    --attente: #B7791F;
-    --justifie: #3F5AA6;
+    --present: #0f7b6c;
+    --absent: #d91d36;
+    --attente: #b7791f;
+    --justifie: #3f5aa6;
 
     /* Feuille blanche posée sur le papier */
-    --background: #FFFFFF;
-    --foreground: #2F2F2E;
-    --card: #FFFFFF;
-    --card-foreground: #2F2F2E;
-    --popover: #FFFFFF;
-    --popover-foreground: #2F2F2E;
+    --background: #ffffff;
+    --foreground: #2f2f2e;
+    --card: #ffffff;
+    --card-foreground: #2f2f2e;
+    --popover: #ffffff;
+    --popover-foreground: #2f2f2e;
 
     /* Actions principales en graphite ; le rouge est réservé aux absences et aux suppressions */
-    --primary: #2F2F2E;
-    --primary-foreground: #FFFFFF;
-    --secondary: #EFEFED;
-    --secondary-foreground: #2F2F2E;
-    --muted: #F3F3F1;
-    --muted-foreground: #5E5E5D;
-    --accent: #EFEFED;
-    --accent-foreground: #2F2F2E;
-    --destructive: #D91D36;
-    --destructive-foreground: #FFFFFF;
+    --primary: #2f2f2e;
+    --primary-foreground: #ffffff;
+    --secondary: #efefed;
+    --secondary-foreground: #2f2f2e;
+    --muted: #f3f3f1;
+    --muted-foreground: #5e5e5d;
+    --accent: #efefed;
+    --accent-foreground: #2f2f2e;
+    --destructive: #d91d36;
+    --destructive-foreground: #ffffff;
 
     /* Réglure */
-    --border: #E3E3E0;
-    --input: #D6D6D2;
-    --ring: #5E5E5D;
+    --border: #e3e3e0;
+    --input: #d6d6d2;
+    --ring: #5e5e5d;
 
-    --chart-1: #2F2F2E;
-    --chart-2: #0F7B6C;
-    --chart-3: #3F5AA6;
-    --chart-4: #B7791F;
-    --chart-5: #D91D36;
+    --chart-1: #2f2f2e;
+    --chart-2: #0f7b6c;
+    --chart-3: #3f5aa6;
+    --chart-4: #b7791f;
+    --chart-5: #d91d36;
 
     --radius: 0.375rem;
 
     /* Papier : barre latérale et marges */
-    --sidebar-background: #F6F6F5;
-    --sidebar: #F6F6F5;
-    --sidebar-foreground: #2F2F2E;
-    --sidebar-primary: #2F2F2E;
-    --sidebar-primary-foreground: #FFFFFF;
-    --sidebar-accent: #FFFFFF;
-    --sidebar-accent-foreground: #2F2F2E;
-    --sidebar-border: #E3E3E0;
-    --sidebar-ring: #5E5E5D;
+    --sidebar-background: #f6f6f5;
+    --sidebar: #f6f6f5;
+    --sidebar-foreground: #2f2f2e;
+    --sidebar-primary: #2f2f2e;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #ffffff;
+    --sidebar-accent-foreground: #2f2f2e;
+    --sidebar-border: #e3e3e0;
+    --sidebar-ring: #5e5e5d;
 }
 
 .dark {
-    --isga-rouge: #F0445B;
-    --isga-gris: #A3A3A0;
+    --isga-rouge: #f0445b;
+    --isga-gris: #a3a3a0;
 
-    --present: #34B39D;
-    --absent: #F0445B;
-    --attente: #E0A33A;
-    --justifie: #8196DB;
+    --present: #34b39d;
+    --absent: #f0445b;
+    --attente: #e0a33a;
+    --justifie: #8196db;
 
-    --background: #1C1C1B;
-    --foreground: #EDEDEB;
-    --card: #1C1C1B;
-    --card-foreground: #EDEDEB;
+    --background: #1c1c1b;
+    --foreground: #ededeb;
+    --card: #1c1c1b;
+    --card-foreground: #ededeb;
     --popover: #232322;
-    --popover-foreground: #EDEDEB;
+    --popover-foreground: #ededeb;
 
-    --primary: #EDEDEB;
-    --primary-foreground: #1C1C1B;
-    --secondary: #2A2A29;
-    --secondary-foreground: #EDEDEB;
+    --primary: #ededeb;
+    --primary-foreground: #1c1c1b;
+    --secondary: #2a2a29;
+    --secondary-foreground: #ededeb;
     --muted: #262625;
-    --muted-foreground: #A3A3A0;
-    --accent: #2A2A29;
-    --accent-foreground: #EDEDEB;
-    --destructive: #F0445B;
-    --destructive-foreground: #FFFFFF;
+    --muted-foreground: #a3a3a0;
+    --accent: #2a2a29;
+    --accent-foreground: #ededeb;
+    --destructive: #f0445b;
+    --destructive-foreground: #ffffff;
 
     --border: #333331;
-    --input: #3A3A38;
-    --ring: #A3A3A0;
+    --input: #3a3a38;
+    --ring: #a3a3a0;
 
-    --chart-1: #EDEDEB;
-    --chart-2: #34B39D;
-    --chart-3: #8196DB;
-    --chart-4: #E0A33A;
-    --chart-5: #F0445B;
+    --chart-1: #ededeb;
+    --chart-2: #34b39d;
+    --chart-3: #8196db;
+    --chart-4: #e0a33a;
+    --chart-5: #f0445b;
 
     --sidebar-background: #141413;
     --sidebar: #141413;
-    --sidebar-foreground: #EDEDEB;
-    --sidebar-primary: #EDEDEB;
-    --sidebar-primary-foreground: #1C1C1B;
+    --sidebar-foreground: #ededeb;
+    --sidebar-primary: #ededeb;
+    --sidebar-primary-foreground: #1c1c1b;
     --sidebar-accent: #232322;
-    --sidebar-accent-foreground: #EDEDEB;
+    --sidebar-accent-foreground: #ededeb;
     --sidebar-border: #333331;
-    --sidebar-ring: #A3A3A0;
+    --sidebar-ring: #a3a3a0;
 }
 
 @layer base {

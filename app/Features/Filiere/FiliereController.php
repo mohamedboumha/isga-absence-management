@@ -2,6 +2,7 @@
 
 namespace App\Features\Filiere;
 
+use App\Features\Cycle\CycleService;
 use App\_Core\Services\RendersService;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
@@ -49,6 +50,7 @@ class FiliereController extends Controller {
             'titre_page'  => $titre_page,
             'breadcrumbs' => self::get_breadcrumbs($titre_page, $filiere->exists ? route(self::route_detail, ['cle' => $filiere->cle]) : route(self::route_detail)),
             'item'        => self::item_to_array($filiere),
+            'cycles'      => CycleService::get_cycles_pour_select(),
         ]);
     }
 

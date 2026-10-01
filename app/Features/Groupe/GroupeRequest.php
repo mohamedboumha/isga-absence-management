@@ -2,7 +2,6 @@
 
 namespace App\Features\Groupe;
 
-use App\Features\Filiere\FiliereService;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -33,14 +32,9 @@ class GroupeRequest extends FormRequest {
                 Rule::exists('annees_universitaires', 'id')
                     ->whereNull('deleted_at'),
             ],
-            'filiere_id'             => [
+            'niveau_etude_id'        => [
                 'required',
-                Rule::exists('filieres', 'id')
-                    ->whereNull('deleted_at'),
-            ],
-            'niveau'                 => [
-                'required',
-                Rule::in(FiliereService::niveaux),
+                Rule::exists('niveaux_etudes', 'id')->whereNull('deleted_at'),
             ],
             'nom'                    => [
                 'required',
@@ -59,10 +53,8 @@ class GroupeRequest extends FormRequest {
         return [
             'annee_universitaire_id.required' => "L'année universitaire est obligatoire.",
             'annee_universitaire_id.exists'   => "Cette année universitaire n'existe pas.",
-            'filiere_id.required'             => "La filière est obligatoire.",
-            'filiere_id.exists'               => "Cette filière n'existe pas.",
-            'niveau.required'                 => "Le niveau est obligatoire.",
-            'niveau.in'                       => "Le niveau doit être L1, L2, L3, M1 ou M2.",
+            'niveau_etude_id.required'        => "Le niveau d'études est obligatoire.",
+            'niveau_etude_id.exists'          => "Ce niveau d'études n'existe pas.",
             'nom.required'                    => "Le nom est obligatoire.",
             'nom.max'                         => "Le nom ne doit pas dépasser 30 caractères.",
             'nom.regex'                       => "Le nom ne peut contenir que des lettres, chiffres, espaces et tirets.",

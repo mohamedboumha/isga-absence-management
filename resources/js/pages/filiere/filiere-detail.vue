@@ -29,6 +29,17 @@
         <!-- Champs -->
         <!--=====================================================================================================-->
         <form class="grid gap-4" @submit.prevent="enregistrer">
+            <ChampSelect
+                :mode_vue="mode_vue"
+                nom_champ="cycle_id"
+                label="Cycle"
+                placeholder="Choisir un cycle"
+                required
+                :options="cycles"
+                v-model:valeur="form.cycle_id"
+                :error="form.errors.cycle_id"
+            />
+
             <div class="grid grid-cols-3 gap-4">
                 <ChampChaine
                     :mode_vue="mode_vue"
@@ -79,12 +90,14 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import { Head, Link, router, useForm } from '@inertiajs/vue3';
+import { Head, Link, useForm } from '@inertiajs/vue3';
 import { Button } from '@/components/ui/button';
 import ChampChaine from '@/_core/renders/champ-chaine.vue';
 import ChampTexte from '@/_core/renders/champ-texte.vue';
 import { renders, type ModeVue } from '@/_core/renders';
-import {supprimer_avec_confirmation} from "@/_core/dialogs/actions";
+import { supprimer_avec_confirmation } from '@/_core/dialogs/actions';
+import ChampSelect from '@/_core/renders/champ-select.vue';
+import { SelectOption } from '@/_core/renders/types';
 
 interface Filiere {
     cle: string | null;
@@ -92,12 +105,14 @@ interface Filiere {
     nom: string | null;
     description: string | null;
     can_be_deleted: boolean;
+    cycle_id: number | null;
 }
 
 interface FiliereDetailInterface {
     mode_vue: ModeVue;
     titre_page: string;
     item: Filiere;
+    cycles: SelectOption[];
 }
 
 const props = defineProps<FiliereDetailInterface>();
@@ -109,6 +124,7 @@ const form = useForm({
     code: props.item.code ?? '',
     nom: props.item.nom ?? '',
     description: props.item.description ?? '',
+    cycle_id: props.item.cycle_id ?? null,
 });
 
 const is_editable = computed(

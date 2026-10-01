@@ -30,7 +30,8 @@ class StatistiqueService {
                     ->subYear()
                     ->format('Y-m-d'),
             'date_fin'   => $annee?->date_fin?->format('Y-m-d') ?? today()->format('Y-m-d'),
-            'filiere_id' => null,
+            'cycle_id'        => null,
+            'niveau_etude_id' => null,
             'groupe_id'  => null,
             'module_id'  => null,
         ];
@@ -45,13 +46,15 @@ class StatistiqueService {
         return DB
             ::table('seances')
             ->join('groupes', 'groupes.id', '=', 'seances.groupe_id')
+            ->join('niveaux_etudes', 'niveaux_etudes.id', '=', 'groupes.niveau_etude_id')
             ->whereNull('seances.deleted_at')
             ->where('seances.annulee', false)
             ->whereNotNull('seances.appel_fait_le')
             ->whereBetween('seances.date', [$filtres['date_debut'], $filtres['date_fin']])
             ->when($filtres['groupe_id'] ?? null, fn(Builder $query, $id) => $query->where('seances.groupe_id', $id))
             ->when($filtres['module_id'] ?? null, fn(Builder $query, $id) => $query->where('seances.module_id', $id))
-            ->when($filtres['filiere_id'] ?? null, fn(Builder $query, $id) => $query->where('groupes.filiere_id', $id))
+            ->when($filtres['niveau_etude_id'] ?? null, fn(Builder $query, $id) => $query->where('groupes.niveau_etude_id', $id))
+            ->when($filtres['cycle_id'] ?? null, fn(Builder $query, $id) => $query->where('niveaux_etudes.cycle_id', $id))
             ->when($filtres['enseignant_id'] ?? null, fn(Builder $query, $id) => $query->where('seances.enseignant_id', $id));
     }
 
@@ -74,10 +77,12 @@ class StatistiqueService {
     //==================================================================================================================
     protected static function sous_requete_effectifs() : Builder {
         return DB
-            ::table('etudiants')
-            ->selectRaw('groupe_id, COUNT(*) as effectif')
-            ->whereNull('deleted_at')
-            ->groupBy('groupe_id');
+            ::table('inscriptions')
+            ->join('etudiants', 'etudiants.id', '=', 'inscriptions.etudiant_id')
+            ->whereNull('inscriptions.deleted_at')
+            ->whereNull('etudiants.deleted_at')
+            ->selectRaw('inscriptions.groupe_id, COUNT(*) as effectif')
+            ->groupBy('inscriptions.groupe_id');
     }
 
 

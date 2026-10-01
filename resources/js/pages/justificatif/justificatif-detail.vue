@@ -1,5 +1,5 @@
 <template>
-    <Head :title="titre_page"/>
+    <Head :title="titre_page" />
 
     <div class="flex max-w-3xl flex-col gap-6 p-4">
         <!--=====================================================================================================-->
@@ -9,18 +9,31 @@
             <div class="flex flex-col gap-1">
                 <h1 class="text-xl font-semibold">{{ titre_page }}</h1>
 
-                <div v-if="item.cle" class="flex flex-wrap items-center gap-2 text-sm">
-                    <span class="rounded-full px-2 py-0.5 text-xs font-medium"
-                          :class="classe_statut">{{ item.statut_render }}</span>
-                    <span v-if="item.hors_delai"
-                          class="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">
+                <div
+                    v-if="item.cle"
+                    class="flex flex-wrap items-center gap-2 text-sm"
+                >
+                    <span
+                        class="rounded-full px-2 py-0.5 text-xs font-medium"
+                        :class="classe_statut"
+                        >{{ item.statut_render }}</span
+                    >
+                    <span
+                        v-if="item.hors_delai"
+                        class="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800"
+                    >
                         Hors délai (RG-07)
                     </span>
-                    <span class="text-muted-foreground">Déposé le {{ date_depot_render }}</span>
+                    <span class="text-muted-foreground"
+                        >Déposé le {{ date_depot_render }}</span
+                    >
                 </div>
             </div>
 
-            <div v-if="mode_vue === renders.mode_consultation" class="flex gap-2">
+            <div
+                v-if="mode_vue === renders.mode_consultation"
+                class="flex gap-2"
+            >
                 <template v-if="item.statut === 'EN_ATTENTE'">
                     <Button @click="valider">Valider</Button>
                     <Button variant="outline" @click="refuser">Refuser</Button>
@@ -30,24 +43,32 @@
                     <Link :href="`${url_detail}/edit`">Modifier</Link>
                 </Button>
 
-                <Button v-if="item.can_be_deleted" variant="destructive" @click="supprimer">Supprimer</Button>
+                <Button
+                    v-if="item.can_be_deleted"
+                    variant="destructive"
+                    @click="supprimer"
+                    >Supprimer</Button
+                >
             </div>
         </div>
 
         <!--=====================================================================================================-->
         <!-- Traitement -->
         <!--=====================================================================================================-->
-        <p v-if="item.traite_le" class="bg-muted rounded-md p-3 text-sm">
-            {{ item.statut === 'VALIDE' ? 'Validé' : 'Refusé' }} le {{ item.traite_le }}
-            <template v-if="item.traite_par_nom"> par {{ item.traite_par_nom }}</template>
+        <p v-if="item.traite_le" class="rounded-md bg-muted p-3 text-sm">
+            {{ item.statut === 'VALIDE' ? 'Validé' : 'Refusé' }} le
+            {{ item.traite_le }}
+            <template v-if="item.traite_par_nom">
+                par {{ item.traite_par_nom }}</template
+            >
             .
-            <template v-if="item.motif_refus"><br/><span class="font-medium">Motif du refus :</span> {{
-                    item.motif_refus
-                }}
+            <template v-if="item.motif_refus"
+                ><br /><span class="font-medium">Motif du refus :</span>
+                {{ item.motif_refus }}
             </template>
         </p>
 
-        <InputError :message="erreur_action"/>
+        <InputError :message="erreur_action" />
 
         <!--=====================================================================================================-->
         <!-- Champs -->
@@ -120,7 +141,9 @@
             <!-- Boutons (create / edit uniquement) -->
             <!--=================================================================================================-->
             <div v-if="is_editable" class="flex gap-2">
-                <Button type="submit" :disabled="form.processing">Enregistrer</Button>
+                <Button type="submit" :disabled="form.processing"
+                    >Enregistrer</Button
+                >
 
                 <Button as-child variant="outline">
                     <Link :href="url_annuler">Annuler</Link>
@@ -132,42 +155,60 @@
         <!-- Absences concernées -->
         <!--=====================================================================================================-->
         <div v-if="item.cle" class="flex flex-col gap-2">
-            <h2 class="font-medium">Absences sur la période ({{ item.absences.length }})</h2>
+            <h2 class="font-medium">
+                Absences sur la période ({{ item.absences.length }})
+            </h2>
 
             <div class="overflow-hidden rounded-lg border">
-                <div v-for="(absence, index) in item.absences" :key="index"
-                     class="flex items-center justify-between border-t p-3 text-sm first:border-t-0">
-                    <span>{{ absence.date }} · {{ absence.horaire }} · {{ absence.module }}</span>
+                <div
+                    v-for="(absence, index) in item.absences"
+                    :key="index"
+                    class="flex items-center justify-between border-t p-3 text-sm first:border-t-0"
+                >
+                    <span
+                        >{{ absence.date }} · {{ absence.horaire }} ·
+                        {{ absence.module }}</span
+                    >
                     <span
                         class="rounded-full px-2 py-0.5 text-xs font-medium"
-                        :class="absence.justifiee ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'"
+                        :class="
+                            absence.justifiee
+                                ? 'bg-green-100 text-green-800'
+                                : 'bg-red-100 text-red-800'
+                        "
                     >
                         {{ absence.justifiee ? 'Justifiée' : 'Non justifiée' }}
                     </span>
                 </div>
 
-                <p v-if="!item.absences.length" class="text-muted-foreground p-4 text-center text-sm">
-                    Aucune absence enregistrée pour cet étudiant sur cette période.
+                <p
+                    v-if="!item.absences.length"
+                    class="p-4 text-center text-sm text-muted-foreground"
+                >
+                    Aucune absence enregistrée pour cet étudiant sur cette
+                    période.
                 </p>
             </div>
         </div>
     </div>
 </template>
 
-
 <script setup lang="ts">
-import {computed, ref} from 'vue';
-import {Head, Link, router, useForm} from '@inertiajs/vue3';
+import { computed, ref } from 'vue';
+import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import InputError from '@/components/InputError.vue';
-import {Button} from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
 import ChampDate from '@/_core/renders/champ-date.vue';
 import ChampFichier from '@/_core/renders/champ-fichier.vue';
 import ChampSelect from '@/_core/renders/champ-select.vue';
 import ChampTexte from '@/_core/renders/champ-texte.vue';
-import {renders, type ModeVue} from '@/_core/renders';
-import type {SelectOption} from '@/_core/renders/types';
-import {demander_confirmation} from "@/_core/dialogs/confirmation";
-import {afficher_erreurs, supprimer_avec_confirmation} from "@/_core/dialogs/actions";
+import { renders, type ModeVue } from '@/_core/renders';
+import type { SelectOption } from '@/_core/renders/types';
+import { demander_confirmation } from '@/_core/dialogs/confirmation';
+import {
+    afficher_erreurs,
+    supprimer_avec_confirmation,
+} from '@/_core/dialogs/actions';
 
 interface AbsenceCouverte {
     date: string;
@@ -219,9 +260,15 @@ const form = useForm({
     fichier: null as File | null,
 });
 
-const is_editable = computed(() => props.mode_vue === renders.mode_create || props.mode_vue === renders.mode_edit);
+const is_editable = computed(
+    () =>
+        props.mode_vue === renders.mode_create ||
+        props.mode_vue === renders.mode_edit,
+);
 
-const date_depot_render = computed(() => props.item.date_depot?.split('-').reverse().join('/') ?? '—');
+const date_depot_render = computed(
+    () => props.item.date_depot?.split('-').reverse().join('/') ?? '—',
+);
 
 const classe_statut = computed(() => ({
     'bg-amber-100 text-amber-800': props.item.statut === 'EN_ATTENTE',
@@ -233,15 +280,19 @@ const classe_statut = computed(() => ({
 // URLs
 //==============================================================================================================
 const url_list = '/justificatifs';
-const url_detail = props.item.cle ? `/justificatif/${props.item.cle}` : '/justificatif';
-const url_annuler = props.mode_vue === renders.mode_edit ? url_detail : url_list;
+const url_detail = props.item.cle
+    ? `/justificatif/${props.item.cle}`
+    : '/justificatif';
+const url_annuler =
+    props.mode_vue === renders.mode_edit ? url_detail : url_list;
 
 //==============================================================================================================
 // Actions
 //==============================================================================================================
 const erreur_action = ref<string | undefined>();
 
-const enregistrer = () => form.post(url_detail, {forceFormData: true, preserveState: 'errors'});
+const enregistrer = () =>
+    form.post(url_detail, { forceFormData: true, preserveState: 'errors' });
 
 const valider = async () => {
     const { confirme } = await demander_confirmation({
@@ -261,15 +312,31 @@ const refuser = async () => {
         message: 'Le motif sera conservé dans la fiche du justificatif.',
         bouton: 'Refuser',
         variante: 'destructive',
-        champ: { label: 'Motif du refus', placeholder: 'Ex. document illisible', obligatoire: true },
+        champ: {
+            label: 'Motif du refus',
+            placeholder: 'Ex. document illisible',
+            obligatoire: true,
+        },
     });
 
     if (!confirme) return;
 
-    router.post(`${url_detail}/refuser`, { motif_refus: valeur }, { onError: afficher_erreurs });
+    router.post(
+        `${url_detail}/refuser`,
+        { motif_refus: valeur },
+        { onError: afficher_erreurs },
+    );
 };
 
 const supprimer = () =>
-    supprimer_avec_confirmation(url_detail, 'Supprimer ce justificatif ?', 'Le document joint sera conservé dans les archives.');
-    supprimer_avec_confirmation(url_detail, 'Supprimer ce justificatif ?', 'Le document joint sera conservé dans les archives.');
+    supprimer_avec_confirmation(
+        url_detail,
+        'Supprimer ce justificatif ?',
+        'Le document joint sera conservé dans les archives.',
+    );
+supprimer_avec_confirmation(
+    url_detail,
+    'Supprimer ce justificatif ?',
+    'Le document joint sera conservé dans les archives.',
+);
 </script>

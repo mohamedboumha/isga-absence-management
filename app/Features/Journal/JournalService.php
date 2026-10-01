@@ -34,8 +34,10 @@ class JournalService {
     // Nom des classes => libellé affiché
     //==================================================================================================================
     const array entites = [
+        'Inscription'        => "Inscription",
         'AnneeUniversitaire' => "Année universitaire",
-        'Semestre'           => "Semestre",
+        'Cycle'              => "Cycle",
+        'NiveauEtude'        => "Niveau d'études",
         'Filiere'            => "Filière",
         'Groupe'             => "Groupe",
         'Module'             => "Module",

@@ -1,16 +1,30 @@
 <template>
     <div class="relative h-72">
-        <Line :data="donnees" :options="options"/>
+        <Line :data="donnees" :options="options" />
     </div>
 </template>
 
-
 <script setup lang="ts">
-import {computed} from 'vue';
-import {CategoryScale, Chart as ChartJS, Filler, LinearScale, LineElement, PointElement, Tooltip} from 'chart.js';
-import {Line} from 'vue-chartjs';
+import { computed } from 'vue';
+import {
+    CategoryScale,
+    Chart as ChartJS,
+    Filler,
+    LinearScale,
+    LineElement,
+    PointElement,
+    Tooltip,
+} from 'chart.js';
+import { Line } from 'vue-chartjs';
 
-ChartJS.register(LineElement, PointElement, CategoryScale, LinearScale, Tooltip, Filler);
+ChartJS.register(
+    LineElement,
+    PointElement,
+    CategoryScale,
+    LinearScale,
+    Tooltip,
+    Filler,
+);
 
 interface GraphiqueLigneInterface {
     labels: string[];
@@ -41,7 +55,7 @@ const donnees = computed(() => ({
 const options = {
     responsive: true,
     maintainAspectRatio: false,
-    plugins: {legend: {display: false}},
-    scales: {y: {beginAtZero: true, ticks: {precision: 0}}},
+    plugins: { legend: { display: false } },
+    scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
 };
 </script>

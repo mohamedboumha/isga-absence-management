@@ -8,19 +8,19 @@ use App\Features\Absence\Absence;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Features\Inscription\Inscription;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
  * @property int $id
  * @property string $cle
- * @property int $groupe_id
+ * @property Inscription|null $inscription_active
  * @property string $cne
  * @property string $nom
  * @property string $prenom
  * @property string|null $email
  * @property string|null $telephone
  * @property \Carbon\Carbon|null $date_naissance
- * @property Groupe $groupe
  * @property-read string $nom_complet
  *
  * @method static Builder by_groupe(?Groupe $groupe)
@@ -44,8 +44,19 @@ class Etudiant extends BaseModel {
     // RELATIONS
     //
     //[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][]
-    public function groupe() : BelongsTo {
-        return $this->belongsTo(Groupe::class, 'groupe_id');
+    public function inscriptions() : HasMany {
+        return $this->hasMany(Inscription::class, 'etudiant_id');
+    }
+
+
+
+    //==================================================================================================================
+    // L'inscription de l'année universitaire active (null si l'étudiant n'est pas inscrit cette année)
+    //==================================================================================================================
+    public function inscription_active() : HasOne {
+        return $this
+            ->hasOne(Inscription::class, 'etudiant_id')
+            ->whereHas('annee_universitaire', fn(Builder $query) => $query->where('active', true));
     }
 
 
@@ -80,10 +91,7 @@ class Etudiant extends BaseModel {
     // BUSINESS
     //
     //[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][]
-    public static function faker(array $params) : array {
-        /** @var Groupe $groupe */
-        $groupe = $params['groupe'];
-
+    public static function faker(array $params = []) : array {
         $faker = fake('fr_FR');
 
 
@@ -97,7 +105,6 @@ class Etudiant extends BaseModel {
                        ->exists());
 
         return [
-            'groupe_id'      => $groupe->id,
             'cne'            => $cne,
             'nom'            => $faker->lastName(),
             'prenom'         => $faker->firstName(),
@@ -122,6 +129,6 @@ class Etudiant extends BaseModel {
     //
     //[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][]
     public function scopeBy_groupe(Builder $query, ?Groupe $groupe) : Builder {
-        return $query->when($groupe, fn(Builder $query) => $query->where('groupe_id', $groupe->id));
+        return $query->when($groupe, fn(Builder $query) => $query->whereHas('inscriptions', fn(Builder $query) => $query->where('groupe_id', $groupe->id)));
     }
 }

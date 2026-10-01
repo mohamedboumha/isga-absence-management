@@ -1,5 +1,5 @@
 <template>
-    <Head :title="titre_page"/>
+    <Head :title="titre_page" />
 
     <div class="flex flex-col gap-6 p-4">
         <div class="flex items-center justify-between">
@@ -19,27 +19,32 @@
                 :key="onglet.valeur"
                 :href="`/justificatifs?statut=${onglet.valeur}`"
                 class="-mb-px border-b-2 px-3 py-2 text-sm"
-                :class="statut === onglet.valeur ? 'border-primary font-medium' : 'text-muted-foreground border-transparent'"
+                :class="
+                    statut === onglet.valeur
+                        ? 'border-primary font-medium'
+                        : 'border-transparent text-muted-foreground'
+                "
             >
                 {{ onglet.label }}
-                <span v-if="onglet.total !== null" class="bg-muted ml-1 rounded-full px-1.5 text-xs">{{
-                        onglet.total
-                    }}</span>
+                <span
+                    v-if="onglet.total !== null"
+                    class="ml-1 rounded-full bg-muted px-1.5 text-xs"
+                    >{{ onglet.total }}</span
+                >
             </Link>
         </div>
 
-        <DataTable :table="table"/>
+        <DataTable :table="table" />
     </div>
 </template>
 
-
 <script setup lang="ts">
-import {computed} from 'vue';
-import {Head, Link} from '@inertiajs/vue3';
-import {Button} from '@/components/ui/button';
+import { computed } from 'vue';
+import { Head, Link } from '@inertiajs/vue3';
+import { Button } from '@/components/ui/button';
 import DataTable from '@/_core/table/data-table.vue';
-import type {ModeVue} from '@/_core/renders';
-import type {Table} from '@/_core/table/types';
+import type { ModeVue } from '@/_core/renders';
+import type { Table } from '@/_core/table/types';
 
 interface JustificatifListInterface {
     mode_vue: ModeVue;
@@ -59,6 +64,6 @@ const onglets = computed(() => [
         label,
         total: props.compteurs[valeur] ?? 0,
     })),
-    {valeur: 'TOUS', label: 'Tous', total: null},
+    { valeur: 'TOUS', label: 'Tous', total: null },
 ]);
 </script>

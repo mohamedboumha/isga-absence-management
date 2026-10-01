@@ -10,7 +10,9 @@ return new class extends Migration {
             $table->id();
             $table->string('cle', 32)
                   ->unique();
-
+            $table->foreignId('cycle_id')
+                  ->constrained('cycles')
+                  ->restrictOnDelete();
             $table->string('code', 10)
                   ->unique();
             $table->string('nom', 150)

@@ -11,10 +11,6 @@ return new class extends Migration {
             $table->string('cle', 32)
                   ->unique();
 
-            $table->foreignId('groupe_id')
-                  ->constrained('groupes')
-                  ->restrictOnDelete();
-
             $table->string('cne', 10)
                   ->unique();     // Code Massar, ex. R130245678
             $table->string('nom', 100);

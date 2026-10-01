@@ -30,4 +30,14 @@ export const statuts: Record<string, StatutDefinition> = {
     actif: { tonalite: 'present', label: 'Actif' },
     desactive: { tonalite: 'neutre', label: 'Désactivé' },
     en_cours: { tonalite: 'present', label: 'En cours' },
+
+    // Décisions de fin d'année
+    ADMIS: { tonalite: 'present', label: 'Admis' },
+    REDOUBLANT: { tonalite: 'attente', label: 'Redoublant' },
+    DIPLOME: { tonalite: 'justifie', label: 'Diplômé' },
+    SORTANT: { tonalite: 'neutre', label: 'Sortant' },
+
+    // Passage d'année d'un groupe
+    traite: { tonalite: 'present', label: 'Traité' },
+    a_traiter: { tonalite: 'attente', label: 'À traiter' },
 };

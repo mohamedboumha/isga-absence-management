@@ -1,5 +1,5 @@
 <template>
-    <Head :title="titre_page"/>
+    <Head :title="titre_page" />
 
     <div class="flex max-w-3xl flex-col gap-6 p-4">
         <!--=====================================================================================================-->
@@ -9,26 +9,43 @@
             <div>
                 <h1 class="text-xl font-semibold">{{ titre_page }}</h1>
 
-                <p v-if="mode_vue === renders.mode_consultation && item.annulee"
-                   class="text-destructive text-sm font-medium">
+                <p
+                    v-if="
+                        mode_vue === renders.mode_consultation && item.annulee
+                    "
+                    class="text-sm font-medium text-destructive"
+                >
                     Séance annulée
                 </p>
             </div>
 
-            <div v-if="mode_vue === renders.mode_consultation" class="flex gap-2">
+            <div
+                v-if="mode_vue === renders.mode_consultation"
+                class="flex gap-2"
+            >
                 <Button v-if="!item.annulee" as-child>
                     <Link :href="`${url_detail}/appel`">Faire l'appel</Link>
                 </Button>
 
                 <Button as-child variant="outline">
-                    <a :href="`${url_detail}/feuille-presence`" target="_blank" rel="noopener">Feuille de présence</a>
+                    <a
+                        :href="`${url_detail}/feuille-presence`"
+                        target="_blank"
+                        rel="noopener"
+                        >Feuille de présence</a
+                    >
                 </Button>
 
                 <Button as-child variant="outline">
                     <Link :href="`${url_detail}/edit`">Modifier</Link>
                 </Button>
 
-                <Button v-if="item.can_be_deleted" variant="destructive" @click="supprimer">Supprimer</Button>
+                <Button
+                    v-if="item.can_be_deleted"
+                    variant="destructive"
+                    @click="supprimer"
+                    >Supprimer</Button
+                >
             </div>
         </div>
 
@@ -76,7 +93,11 @@
                 :mode_vue="mode_vue"
                 nom_champ="enseignant_id"
                 label="Enseignant"
-                :placeholder="form.module_id ? 'Choisir un enseignant' : 'Choisir d\'abord un module'"
+                :placeholder="
+                    form.module_id
+                        ? 'Choisir un enseignant'
+                        : 'Choisir d\'abord un module'
+                "
                 required
                 :options="enseignants_du_module"
                 v-model:valeur="form.enseignant_id"
@@ -138,7 +159,9 @@
             <!-- Boutons (create / edit uniquement) -->
             <!--=================================================================================================-->
             <div v-if="is_editable" class="flex gap-2">
-                <Button type="submit" :disabled="form.processing">Enregistrer</Button>
+                <Button type="submit" :disabled="form.processing"
+                    >Enregistrer</Button
+                >
 
                 <Button as-child variant="outline">
                     <Link :href="url_annuler">Annuler</Link>
@@ -148,19 +171,18 @@
     </div>
 </template>
 
-
 <script setup lang="ts">
-import {computed, watch} from 'vue';
-import {Head, Link, router, useForm} from '@inertiajs/vue3';
-import {Button} from '@/components/ui/button';
+import { computed, watch } from 'vue';
+import { Head, Link, router, useForm } from '@inertiajs/vue3';
+import { Button } from '@/components/ui/button';
 import ChampBoolean from '@/_core/renders/champ-boolean.vue';
 import ChampChaine from '@/_core/renders/champ-chaine.vue';
 import ChampDate from '@/_core/renders/champ-date.vue';
 import ChampHeure from '@/_core/renders/champ-heure.vue';
 import ChampSelect from '@/_core/renders/champ-select.vue';
-import {renders, type ModeVue} from '@/_core/renders';
-import type {SelectOption} from '@/_core/renders/types';
-import {supprimer_avec_confirmation} from "@/_core/dialogs/actions";
+import { renders, type ModeVue } from '@/_core/renders';
+import type { SelectOption } from '@/_core/renders/types';
+import { supprimer_avec_confirmation } from '@/_core/dialogs/actions';
 
 interface Seance {
     cle: string | null;
@@ -207,7 +229,11 @@ const form = useForm({
     annulee: props.item.annulee ?? false,
 });
 
-const is_editable = computed(() => props.mode_vue === renders.mode_create || props.mode_vue === renders.mode_edit);
+const is_editable = computed(
+    () =>
+        props.mode_vue === renders.mode_create ||
+        props.mode_vue === renders.mode_edit,
+);
 
 //==============================================================================================================
 // Enseignants du module choisi (en consultation : tous, pour afficher le nom)
@@ -215,11 +241,15 @@ const is_editable = computed(() => props.mode_vue === renders.mode_create || pro
 const enseignants_du_module = computed(() => {
     if (!is_editable.value) return props.enseignants;
 
-    const module = props.modules.find((option) => option.valeur === form.module_id);
+    const module = props.modules.find(
+        (option) => option.valeur === form.module_id,
+    );
 
     if (!module) return [];
 
-    return props.enseignants.filter((option) => module.enseignant_ids.includes(Number(option.valeur)));
+    return props.enseignants.filter((option) =>
+        module.enseignant_ids.includes(Number(option.valeur)),
+    );
 });
 
 //==============================================================================================================
@@ -228,7 +258,11 @@ const enseignants_du_module = computed(() => {
 watch(
     () => form.module_id,
     () => {
-        if (!enseignants_du_module.value.some((option) => option.valeur === form.enseignant_id)) {
+        if (
+            !enseignants_du_module.value.some(
+                (option) => option.valeur === form.enseignant_id,
+            )
+        ) {
             form.enseignant_id = null;
         }
     },
@@ -239,17 +273,18 @@ watch(
 //==============================================================================================================
 const url_list = '/seances';
 const url_detail = props.item.cle ? `/seance/${props.item.cle}` : '/seance';
-const url_annuler = props.mode_vue === renders.mode_edit ? url_detail : url_list;
+const url_annuler =
+    props.mode_vue === renders.mode_edit ? url_detail : url_list;
 
 //==============================================================================================================
 // Actions
 //==============================================================================================================
-const enregistrer = () => form.post(url_detail, {preserveState: 'errors'});
+const enregistrer = () => form.post(url_detail, { preserveState: 'errors' });
 
 const supprimer = () =>
     supprimer_avec_confirmation(
         url_detail,
         'Supprimer cette séance ?',
-        "Elle disparaîtra du planning. Pour garder une trace, vous pouvez plutôt la marquer comme annulée.",
+        'Elle disparaîtra du planning. Pour garder une trace, vous pouvez plutôt la marquer comme annulée.',
     );
 </script>

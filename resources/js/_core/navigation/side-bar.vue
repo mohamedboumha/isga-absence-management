@@ -5,8 +5,8 @@
         class="px-2 py-0"
     >
         <SidebarGroupLabel v-if="groupe.label">{{
-                groupe.label
-            }}</SidebarGroupLabel>
+            groupe.label
+        }}</SidebarGroupLabel>
 
         <SidebarMenu>
             <SidebarMenuItem v-for="item in groupe.items" :key="item.href">

@@ -1,5 +1,5 @@
 <template>
-    <Head :title="titre_page"/>
+    <Head :title="titre_page" />
 
     <div class="flex max-w-2xl flex-col gap-6 p-4">
         <!--=====================================================================================================-->
@@ -8,12 +8,20 @@
         <div class="flex items-center justify-between">
             <h1 class="text-xl font-semibold">{{ titre_page }}</h1>
 
-            <div v-if="mode_vue === renders.mode_consultation" class="flex gap-2">
+            <div
+                v-if="mode_vue === renders.mode_consultation"
+                class="flex gap-2"
+            >
                 <Button as-child variant="outline">
                     <Link :href="`${url_detail}/edit`">Modifier</Link>
                 </Button>
 
-                <Button v-if="item.can_be_deleted" variant="destructive" @click="supprimer">Supprimer</Button>
+                <Button
+                    v-if="item.can_be_deleted"
+                    variant="destructive"
+                    @click="supprimer"
+                    >Supprimer</Button
+                >
             </div>
         </div>
 
@@ -23,13 +31,13 @@
         <form class="grid gap-4" @submit.prevent="enregistrer">
             <ChampSelect
                 :mode_vue="mode_vue"
-                nom_champ="filiere_id"
-                label="Filière"
-                placeholder="Choisir une filière"
+                nom_champ="niveau_etude_id"
+                label="Niveau d'études"
+                placeholder="Choisir un niveau"
                 required
-                :options="filieres"
-                v-model:valeur="form.filiere_id"
-                :error="form.errors.filiere_id"
+                :options="niveaux"
+                v-model:valeur="form.niveau_etude_id"
+                :error="form.errors.niveau_etude_id"
             />
 
             <div class="grid grid-cols-3 gap-4">
@@ -61,9 +69,13 @@
                     :mode_vue="mode_vue"
                     nom_champ="semestre"
                     label="Semestre"
-                    placeholder="Choisir un semestre"
+                    :placeholder="
+                        form.niveau_etude_id
+                            ? 'Choisir un semestre'
+                            : 'Choisir d\'abord un niveau'
+                    "
                     required
-                    :options="semestres"
+                    :options="semestres_du_niveau"
                     v-model:valeur="form.semestre"
                     :error="form.errors.semestre"
                 />
@@ -86,7 +98,9 @@
             <!-- Boutons (create / edit uniquement) -->
             <!--=================================================================================================-->
             <div v-if="is_editable" class="flex gap-2">
-                <Button type="submit" :disabled="form.processing">Enregistrer</Button>
+                <Button type="submit" :disabled="form.processing"
+                    >Enregistrer</Button
+                >
 
                 <Button as-child variant="outline">
                     <Link :href="url_annuler">Annuler</Link>
@@ -96,35 +110,36 @@
     </div>
 </template>
 
-
 <script setup lang="ts">
-import {computed} from 'vue';
-import {Head, Link, router, useForm} from '@inertiajs/vue3';
-import {Button} from '@/components/ui/button';
+import { computed } from 'vue';
+import { Head, Link, useForm } from '@inertiajs/vue3';
+import { Button } from '@/components/ui/button';
 import ChampChaine from '@/_core/renders/champ-chaine.vue';
 import ChampNombre from '@/_core/renders/champ-nombre.vue';
 import ChampSelect from '@/_core/renders/champ-select.vue';
-import {renders, type ModeVue} from '@/_core/renders';
-import type {SelectOption} from '@/_core/renders/types';
-import {supprimer_avec_confirmation} from "@/_core/dialogs/actions";
+import { renders, type ModeVue } from '@/_core/renders';
+import type { SelectOption } from '@/_core/renders/types';
+import { supprimer_avec_confirmation } from '@/_core/dialogs/actions';
 
 interface Module {
     cle: string | null;
-    filiere_id: number | null;
+    niveau_etude_id: number | null;
     code: string | null;
     intitule: string | null;
-    semestre: string | null;
+    semestre: number | null;
     volume_horaire: number | null;
-    niveau: string | null;
     can_be_deleted: boolean;
+}
+
+interface NiveauOption extends SelectOption {
+    nb_semestres: number;
 }
 
 interface ModuleDetailInterface {
     mode_vue: ModeVue;
     titre_page: string;
     item: Module;
-    filieres: SelectOption[];
-    semestres: SelectOption[];
+    niveaux: NiveauOption[];
 }
 
 const props = defineProps<ModuleDetailInterface>();
@@ -133,31 +148,50 @@ const props = defineProps<ModuleDetailInterface>();
 // Formulaire
 //==============================================================================================================
 const form = useForm({
-    filiere_id: props.item.filiere_id ?? null,
+    niveau_etude_id: props.item.niveau_etude_id ?? null,
     code: props.item.code ?? '',
     intitule: props.item.intitule ?? '',
     semestre: props.item.semestre ?? null,
     volume_horaire: props.item.volume_horaire ?? null,
 });
 
-const is_editable = computed(() => props.mode_vue === renders.mode_create || props.mode_vue === renders.mode_edit);
+const is_editable = computed(
+    () =>
+        props.mode_vue === renders.mode_create ||
+        props.mode_vue === renders.mode_edit,
+);
 
 //==============================================================================================================
 // URLs
 //==============================================================================================================
 const url_list = '/modules';
 const url_detail = props.item.cle ? `/module/${props.item.cle}` : '/module';
-const url_annuler = props.mode_vue === renders.mode_edit ? url_detail : url_list;
+const url_annuler =
+    props.mode_vue === renders.mode_edit ? url_detail : url_list;
 
 //==============================================================================================================
 // Actions
 //==============================================================================================================
-const enregistrer = () => form.post(url_detail, {preserveState: 'errors'});
+const enregistrer = () => form.post(url_detail, { preserveState: 'errors' });
 
 const supprimer = () =>
     supprimer_avec_confirmation(
         url_detail,
         `Supprimer le module ${props.item.code} ?`,
-        "Il sera archivé et ne sera plus proposé lors de la planification des séances.",
+        'Il sera archivé et ne sera plus proposé lors de la planification des séances.',
     );
+
+//==============================================================================================================
+// Semestres proposés : de 1 au nombre de semestres du niveau choisi
+//==============================================================================================================
+const semestres_du_niveau = computed(() => {
+    const niveau = props.niveaux.find(
+        (option) => option.valeur === form.niveau_etude_id,
+    );
+
+    return Array.from({ length: niveau?.nb_semestres ?? 0 }, (_, index) => ({
+        valeur: index + 1,
+        label: `Semestre ${index + 1}`,
+    }));
+});
 </script>

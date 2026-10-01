@@ -6,7 +6,7 @@
             <h1 class="text-xl font-semibold">{{ titre_page }}</h1>
 
             <Button as-child>
-                <Link :href="url_create">Ajouter un semestre</Link>
+                <Link :href="url_create">Ajouter un cycle</Link>
             </Button>
         </div>
 
@@ -21,10 +21,12 @@ import DataTable from '@/_core/table/data-table.vue';
 import type { ModeVue } from '@/_core/renders';
 import type { Table } from '@/_core/table/types';
 
-defineProps<{
+interface CycleListInterface {
     mode_vue: ModeVue;
     titre_page: string;
     table: Table;
     url_create: string;
-}>();
+}
+
+const props = defineProps<CycleListInterface>();
 </script>
