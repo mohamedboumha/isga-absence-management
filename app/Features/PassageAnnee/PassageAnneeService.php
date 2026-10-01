@@ -95,8 +95,7 @@ class PassageAnneeService {
             ->sortBy(fn(Inscription $inscription) => "{$inscription->etudiant->nom} {$inscription->etudiant->prenom}")
             ->values();
 
-        $etudiant_ids = $inscriptions->pluck('etudiant_id')
-                                     ->all();
+        $etudiant_ids = $inscriptions->pluck('etudiant_id')->all();
 
 
         //==============================================================================================================
@@ -122,9 +121,7 @@ class PassageAnneeService {
         //==============================================================================================================
         // Niveaux de destination : ceux du parcours (admis) + le niveau actuel (redoublants)
         //==============================================================================================================
-        $niveaux_destination = collect([...$niveau->suivants->all(), $niveau])
-            ->unique('id')
-            ->values();
+        $niveaux_destination = collect([...$niveau->suivants->all(), $niveau])->unique('id')->values();
 
         $destinations = $niveaux_destination->map(function (NiveauEtude $destination) use ($cible, $niveau) {
             $groupes = Groupe
@@ -139,8 +136,7 @@ class PassageAnneeService {
                 'code'             => $destination->code,
                 'libelle'          => $destination->libelle,
                 'est_redoublement' => $destination->id === $niveau->id,
-                'groupes'          => $groupes->map(fn(Groupe $groupe) => ['valeur' => $groupe->id, 'label' => $groupe->nom])
-                                              ->all(),
+                'groupes'          => $groupes->map(fn(Groupe $groupe) => ['valeur' => $groupe->id, 'label' => $groupe->nom])->all(),
                 'groupe_id_defaut' => $groupes->first()?->id,
                 'nom_automatique'  => Groupe::faker(['annee' => $cible, 'niveau' => $destination])['nom'],
             ];
@@ -167,9 +163,11 @@ class PassageAnneeService {
                 'cne'             => $inscription->etudiant->cne,
                 'nb_absences'     => (int) ($absences[$inscription->etudiant_id] ?? 0),
                 'decision'        => $inscription->decision,
-                'niveau_cible_id' => $inscriptions_cible[$inscription->etudiant_id]?->groupe?->niveau_etude_id ?? null,
-            ])
-                                                  ->all(),
+                //======================================================================================================
+                // get() renvoie null si l'étudiant n'a pas encore d'inscription dans l'année cible (premier passage)
+                //======================================================================================================
+                'niveau_cible_id' => $inscriptions_cible->get($inscription->etudiant_id)?->groupe?->niveau_etude_id,
+            ])->all(),
         ];
     }
 
@@ -180,9 +178,7 @@ class PassageAnneeService {
     //==================================================================================================================
     public static function executer(Groupe $groupe, AnneeUniversitaire $cible, array $destinations, array $lignes) : array {
         return DB::transaction(function () use ($groupe, $cible, $destinations, $lignes) {
-            $niveau = $groupe->niveau_etude()
-                             ->with(['cycle', 'suivants'])
-                             ->firstOrFail();
+            $niveau = $groupe->niveau_etude()->with(['cycle', 'suivants'])->firstOrFail();
 
 
             //==========================================================================================================
@@ -217,8 +213,7 @@ class PassageAnneeService {
             $compteurs = array_fill_keys(array_keys(InscriptionService::decisions), 0);
 
             foreach ($lignes as $ligne) {
-                $inscription = Inscription::with('etudiant')
-                                          ->findOrFail((int) $ligne['inscription_id']);
+                $inscription = Inscription::with('etudiant')->findOrFail((int) $ligne['inscription_id']);
                 $decision    = $ligne['decision'];
 
                 $inscription->decision = $decision;
