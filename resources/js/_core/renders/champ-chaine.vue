@@ -20,7 +20,6 @@
                 :name="nom_champ"
                 :type="type_effectif"
                 :autocomplete="autocomplete"
-                :placeholder="is_editable ? placeholder : '—'"
                 :required="required && is_editable"
                 :disabled="!is_editable"
                 :aria-invalid="Boolean(error)"

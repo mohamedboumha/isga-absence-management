@@ -2,6 +2,8 @@
 
 namespace App\Features\User;
 
+use App\_Core\Services\EmailService;
+use App\_Core\Services\NotificationService;
 use App\_Core\Services\RendersService;
 use App\Http\Controllers\Controller;
 use App\Models\User;
@@ -9,7 +11,6 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
-use App\_Core\Services\NotificationService;
 
 class UserController extends Controller {
     const string page_list   = 'utilisateur/utilisateur-list';
@@ -37,10 +38,10 @@ class UserController extends Controller {
 
         $user = $cle
             ? UserService::get_or_fail($cle)
-            : (new User())->forceFill(['role' => UserService::role_admin, 'actif' => true]);
+            : new User(['role' => UserService::role_admin, 'actif' => true]);
 
         $titre_page = $user->exists
-            ? "Utilisateur " . trim("{$user->prenom} {$user->name}")
+            ? trim("{$user->prenom} " . mb_strtoupper((string) $user->name))
             : "Nouvel administrateur";
 
         return Inertia::render(self::page_detail, [
@@ -57,6 +58,19 @@ class UserController extends Controller {
     public function update(UserRequest $request, ?string $cle = null) : RedirectResponse {
         $user = UserService::process_update_or_create($cle, $request->validated());
 
+        //==============================================================================================================
+        // Nouveau compte : le lien "choisir mon mot de passe" ; le compte est créé même si l'envoi échoue
+        //==============================================================================================================
+        if (!$cle) {
+            $statut = UserService::envoyer_lien_mot_de_passe($user);
+
+            $statut === EmailService::echec
+                ? NotificationService::avertissement("Compte créé, mais l'e-mail n'a pas pu être envoyé à {$user->email}. Utilisez « Renvoyer le lien » un peu plus tard.")
+                : NotificationService::succes("Compte créé. Un lien pour choisir son mot de passe a été envoyé à {$user->email}.");
+        } else {
+            NotificationService::succes("Compte enregistré.");
+        }
+
         return to_route(self::route_detail, ['cle' => $user->cle]);
     }
 
@@ -65,9 +79,11 @@ class UserController extends Controller {
     public function lien_mot_de_passe(string $cle) : RedirectResponse {
         $user = UserService::get_or_fail($cle);
 
-        UserService::envoyer_lien_mot_de_passe($user);
-
-        NotificationService::succes("Lien envoyé à {$user->email}.");
+        match (UserService::envoyer_lien_mot_de_passe($user)) {
+            EmailService::envoye => NotificationService::succes("Lien envoyé à {$user->email}."),
+            EmailService::limite => NotificationService::info("Un lien a déjà été envoyé à {$user->email} il y a moins d'une minute. Patientez avant d'en demander un autre."),
+            default              => NotificationService::erreur("L'e-mail n'a pas pu être envoyé à {$user->email}. Réessayez dans quelques minutes."),
+        };
 
         return to_route(self::route_detail, ['cle' => $cle]);
     }

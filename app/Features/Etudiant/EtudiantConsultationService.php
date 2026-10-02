@@ -40,7 +40,7 @@ class EtudiantConsultationService {
             ->count();
 
         return [
-            'resume'   => [
+            'resume'     => [
                 'groupe'                   => $inscription ? [
                     'nom'     => $inscription->groupe->nom,
                     'niveau'  => $inscription->groupe->niveau_etude->libelle,
@@ -57,9 +57,14 @@ class EtudiantConsultationService {
             ],
 
             //==========================================================================================================
+            // Calendrier de présence de l'année (null si non inscrit)
+            //==========================================================================================================
+            'calendrier' => EtudiantCalendrierService::get($etudiant),
+
+            //==========================================================================================================
             // Les 8 absences les plus récentes de l'année
             //==========================================================================================================
-            'absences' => array_slice(array_reverse($releve['absences']), 0, 8),
+            'absences'   => array_slice(array_reverse($releve['absences']), 0, 8),
 
             'justificatifs' => $justificatifs->map(fn(Justificatif $justificatif) => [
                 'type'       => $justificatif->type_render,

@@ -2,16 +2,18 @@
 
 namespace App\Features\Statistique;
 
+use App\_Core\Builders\Table\TableFilter;
+use App\Features\AnneeUniversitaire\AnneeUniversitaireService;
 use App\Features\Cycle\CycleService;
 use App\Features\Groupe\GroupeService;
 use App\Features\Module\Module;
+use App\Features\NiveauEtude\NiveauEtudeService;
+use App\Features\Seance\SeanceService;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
-use Maatwebsite\Excel\Facades\Excel;
-use App\Features\NiveauEtude\NiveauEtudeService;
-use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class StatistiqueController extends Controller {
     const string page_index = 'statistique/statistique-index';
@@ -19,56 +21,103 @@ class StatistiqueController extends Controller {
 
 
     public function index(Request $request) : InertiaResponse {
-        $filtres = self::get_filtres($request);
+        //==============================================================================================================
+        // Filtres de l'URL (?filtres[periode][du]=...&filtres[groupe]=12), normalisés comme ceux des listes
+        //==============================================================================================================
+        $definitions = self::get_definitions_filtres();
+        $brut        = $request->input('filtres', []);
+        $brut        = is_array($brut) ? $brut : [];
+
+        $valeurs = [];
+
+        foreach ($definitions as $definition) {
+            $valeurs[$definition->get_nom()] = $definition->normaliser($brut[$definition->get_nom()] ?? null);
+        }
+
+        $defaut = StatistiqueService::get_filtres_par_defaut();
+
+        $filtres = [
+            ...$defaut,
+            'date_debut'      => $valeurs['periode']['du'] ?? $defaut['date_debut'],
+            'date_fin'        => $valeurs['periode']['au'] ?? $defaut['date_fin'],
+            'cycle_id'        => $valeurs['cycle'],
+            'niveau_etude_id' => $valeurs['niveau'],
+            'groupe_id'       => $valeurs['groupe'],
+            'module_id'       => $valeurs['module'],
+            'enseignant_id'   => $valeurs['enseignant'],
+        ];
+
+        if ($filtres['date_fin'] < $filtres['date_debut']) {
+            [$filtres['date_debut'], $filtres['date_fin']] = [$filtres['date_fin'], $filtres['date_debut']];
+        }
+
+
+        //==============================================================================================================
+        // Comparaison avec la période précédente de même durée
+        //==============================================================================================================
+        $precedent = StatistiqueService::get_resume(StatistiqueService::get_filtres_periode_precedente($filtres));
+
+        $annee = AnneeUniversitaireService::get_active();
 
         return Inertia::render(self::page_index, [
             'titre_page'    => "Statistiques",
             'breadcrumbs'   => [['title' => "Statistiques", 'href' => route('statistiques.index')]],
-            'filtres'       => $filtres,
+            'filtres'       => array_map(fn(TableFilter $definition) => $definition->get($valeurs[$definition->get_nom()]), $definitions),
+            'periode'       => [
+                'du'    => $filtres['date_debut'],
+                'au'    => $filtres['date_fin'],
+                'texte' => "Du " . Carbon::parse($filtres['date_debut'])
+                                         ->format('d/m/Y') . " au " . Carbon::parse($filtres['date_fin'])
+                                                                            ->format('d/m/Y'),
+            ],
+            'annee'         => $annee ? [
+                'libelle' => $annee->libelle,
+                'du'      => $annee->date_debut?->format('Y-m-d'),
+                'au'      => $annee->date_fin?->format('Y-m-d'),
+            ] : null,
             'resume'        => StatistiqueService::get_resume($filtres),
+            'precedent'     => $precedent['nb_seances'] > 0 ? $precedent : null,
+            'evolution'     => StatistiqueService::get_evolution_taux_par_semaine($filtres),
             'par_groupe'    => StatistiqueService::get_par_groupe($filtres),
             'par_module'    => StatistiqueService::get_par_module($filtres),
+            'par_type'      => StatistiqueService::get_par_type($filtres),
+            'creneaux'      => StatistiqueService::get_par_creneau($filtres),
             'top_etudiants' => StatistiqueService::get_top_etudiants($filtres),
-            'evolution'     => StatistiqueService::get_evolution_par_semaine($filtres),
-            'selects'       => [
-                'cycles'  => [['valeur' => '', 'label' => "Tous"], ...CycleService::get_cycles_pour_select()],
-                'niveaux' => [['valeur' => '', 'label' => "Tous"], ...NiveauEtudeService::get_niveaux_pour_select()],
-                'groupes' => [['valeur' => '', 'label' => "Tous"], ...GroupeService::get_groupes_pour_select()],
-                'modules' => [
-                    ['valeur' => '', 'label' => "Tous"],
-                    ...Module::query()
-                             ->orderBy('code')
-                             ->get()
-                             ->map(fn(Module $module) => ['valeur' => $module->id, 'label' => "{$module->code} — {$module->intitule}"])
-                             ->all(),
-                ],
-            ],
         ]);
     }
 
 
 
-    protected static function get_filtres(Request $request) : array {
-        $donnees = $request->validate([
-                                          'date_debut'      => ['nullable', 'date'],
-                                          'date_fin'        => ['nullable', 'date', 'after_or_equal:date_debut'],
-                                          'cycle_id'        => ['nullable', 'integer'],
-                                          'niveau_etude_id' => ['nullable', 'integer'],
-                                          'groupe_id'       => ['nullable', 'integer'],
-                                          'module_id'       => ['nullable', 'integer'],
-                                      ]);
-
+    /**
+     * @return TableFilter[]
+     */
+    protected static function get_definitions_filtres() : array {
         return [
-            ...StatistiqueService::get_filtres_par_defaut(),
-            ...array_filter($donnees, fn($valeur) => $valeur !== null),
+            TableFilter::new('periode')
+                       ->label("Période")
+                       ->periode(),
+            TableFilter::new('cycle')
+                       ->label("Cycle")
+                       ->select(CycleService::get_cycles_pour_select()),
+            TableFilter::new('niveau')
+                       ->label("Niveau d'études")
+                       ->select(NiveauEtudeService::get_niveaux_pour_select()),
+            TableFilter::new('groupe')
+                       ->label("Groupe")
+                       ->select(GroupeService::get_groupes_pour_select()),
+            TableFilter
+                ::new('module')
+                ->label("Module")
+                ->select(
+                    Module::query()
+                          ->orderBy('code')
+                          ->get()
+                          ->map(fn(Module $module) => ['valeur' => $module->id, 'label' => "{$module->code} — {$module->intitule}"])
+                          ->all()
+                ),
+            TableFilter::new('enseignant')
+                       ->label("Enseignant")
+                       ->select(SeanceService::get_enseignants_pour_select()),
         ];
-    }
-
-
-
-    public function export(Request $request) : BinaryFileResponse {
-        $filtres = self::get_filtres($request);
-
-        return Excel::download(new StatistiquesExport($filtres), 'statistiques-' . now()->format('Y-m-d') . '.xlsx');
     }
 }

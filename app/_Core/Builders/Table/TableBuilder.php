@@ -20,17 +20,18 @@ class TableBuilder {
     const array per_page_options  = [15, 25, 50, 100];
 
     protected Builder  $query;
-    protected array    $columns           = [];
-    protected array    $filtres           = [];
-    protected array    $valeurs_filtres   = [];
-    protected ?string  $search            = null;
-    protected ?string  $tri_par           = null;
-    protected string   $tri_direction     = 'asc';
-    protected int      $per_page          = self::default_per_page;
-    protected ?Closure $row_url           = null;
-    protected string   $nom_export        = 'export';
-    protected bool     $avec_modification = true;
-    protected bool     $avec_suppression  = true;
+    protected array    $columns             = [];
+    protected array    $filtres             = [];
+    protected array    $valeurs_filtres     = [];
+    protected ?string  $search              = null;
+    protected ?string  $tri_par             = null;
+    protected string   $tri_direction       = 'asc';
+    protected int      $per_page            = self::default_per_page;
+    protected ?Closure $row_url             = null;
+    protected ?Closure $export_personnalise = null;
+    protected string   $nom_export          = 'export';
+    protected bool     $avec_modification   = true;
+    protected bool     $avec_suppression    = true;
 
 
 
@@ -94,6 +95,18 @@ class TableBuilder {
 
     public function nom_export(string $nom_export) : static {
         $this->nom_export = $nom_export;
+
+        return $this;
+    }
+
+
+
+    //==================================================================================================================
+    // Export Excel sur mesure : fn(Builder $query) => BinaryFileResponse
+    // La requête reçue a déjà la recherche, les filtres et le tri de la liste
+    //==================================================================================================================
+    public function export_avec(Closure $export) : static {
+        $this->export_personnalise = $export;
 
         return $this;
     }
@@ -295,11 +308,16 @@ class TableBuilder {
 
 
         //==============================================================================================================
-        // Toutes les lignes (pas de pagination), avec les valeurs mises en forme
+        // Export sur mesure (ex. étudiants au format d'import), sinon les colonnes du tableau
         //==============================================================================================================
+        if ($this->export_personnalise) {
+            return ($this->export_personnalise)($this->query->limit(self::max_lignes_export));
+        }
+
         $lignes = [];
 
-        foreach ($this->query->limit(self::max_lignes_export)->get() as $model) {
+        foreach ($this->query->limit(self::max_lignes_export)
+                             ->get() as $model) {
             $valeurs = $this->get_valeurs($model);
             $ligne   = [];
 
@@ -333,7 +351,8 @@ class TableBuilder {
 
         return match ($render) {
             RendersService::render_boolean  => $valeur ? 'Oui' : 'Non',
-            RendersService::render_date     => Carbon::parse($valeur)->format('d/m/Y'),
+            RendersService::render_date     => Carbon::parse($valeur)
+                                                     ->format('d/m/Y'),
             RendersService::render_statut   => ucfirst(str_replace('_', ' ', mb_strtolower((string) $valeur))),
             RendersService::render_personne => $sous_texte ? "{$valeur} ({$sous_texte})" : $valeur,
             default                         => $valeur,

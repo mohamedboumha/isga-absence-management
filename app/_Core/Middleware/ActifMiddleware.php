@@ -25,7 +25,7 @@ class ActifMiddleware {
 
             return redirect()
                 ->route('login')
-                ->withErrors(['email' => "Ce compte est désactivé. Contactez le super-administrateur."]);
+                ->withErrors(['email' => "Ce compte est désactivé. Contactez-nous pour plus d’informations."]);
         }
 
         return $next($request);

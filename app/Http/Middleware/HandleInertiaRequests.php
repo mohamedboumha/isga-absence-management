@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\_Core\Navigation\SideBarService;
 use App\_Core\Services\CouleurService;
+use App\Features\AnneeUniversitaire\AnneeUniversitaireService;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -46,7 +47,13 @@ class HandleInertiaRequests extends Middleware {
             ],
             'sidebar'          => fn() => SideBarService::get_sidebar($request->user()),
             'palette_couleurs' => fn() => CouleurService::get_palette_pour_front(),
-            'sidebarOpen'      => !$request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
+
+            //==========================================================================================================
+            // Année en cours : affichée dans la barre du haut (seulement pour un utilisateur connecté)
+            //==========================================================================================================
+            'annee_active'     => fn() => $request->user() ? AnneeUniversitaireService::get_active()?->libelle : null,
+
+            'sidebarOpen' => !$request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];
     }
 }

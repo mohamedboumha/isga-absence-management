@@ -13,6 +13,13 @@ class StatistiqueService {
     //==================================================================================================================
     const string duree_sql = 'TIME_TO_SEC(TIMEDIFF(seances.heure_fin, seances.heure_debut)) / 3600';
 
+    //==================================================================================================================
+    // Couleur d'un groupe ou d'un module : celle de la filière, sinon celle du cycle (comme couleur_effective)
+    //==================================================================================================================
+    const string couleur_sql = "COALESCE(filieres.couleur, cycles.couleur, '#475569')";
+
+    const array jours_semaine = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
+
 
     //[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][]
     //
@@ -26,14 +33,36 @@ class StatistiqueService {
         $annee = AnneeUniversitaireService::get_active();
 
         return [
-            'date_debut' => $annee?->date_debut?->format('Y-m-d') ?? today()
+            'date_debut'      => $annee?->date_debut?->format('Y-m-d') ?? today()
                     ->subYear()
                     ->format('Y-m-d'),
-            'date_fin'   => $annee?->date_fin?->format('Y-m-d') ?? today()->format('Y-m-d'),
+            'date_fin'        => $annee?->date_fin?->format('Y-m-d') ?? today()->format('Y-m-d'),
             'cycle_id'        => null,
             'niveau_etude_id' => null,
-            'groupe_id'  => null,
-            'module_id'  => null,
+            'groupe_id'       => null,
+            'module_id'       => null,
+            'enseignant_id'   => null,
+        ];
+    }
+
+
+
+    //==================================================================================================================
+    // Même durée, juste avant : 01/10 → 31/10 donne 31/08 → 30/09 (pour comparer)
+    //==================================================================================================================
+    public static function get_filtres_periode_precedente(array $filtres) : array {
+        $debut = Carbon::parse($filtres['date_debut']);
+        $fin   = Carbon::parse($filtres['date_fin']);
+        $jours = (int) $debut->diffInDays($fin) + 1;
+
+        return [
+            ...$filtres,
+            'date_debut' => $debut->copy()
+                                  ->subDays($jours)
+                                  ->format('Y-m-d'),
+            'date_fin'   => $debut->copy()
+                                  ->subDay()
+                                  ->format('Y-m-d'),
         ];
     }
 
@@ -73,7 +102,18 @@ class StatistiqueService {
 
 
     //==================================================================================================================
-    // Effectif actuel de chaque groupe (sous-requête)
+    // Jointures pour la couleur du niveau (filière, sinon cycle)
+    //==================================================================================================================
+    protected static function avec_couleur(Builder $query) : Builder {
+        return $query
+            ->leftJoin('filieres', 'filieres.id', '=', 'niveaux_etudes.filiere_id')
+            ->join('cycles', 'cycles.id', '=', 'niveaux_etudes.cycle_id');
+    }
+
+
+
+    //==================================================================================================================
+    // Effectif de chaque groupe, d'après ses inscriptions (donc juste pour toutes les années)
     //==================================================================================================================
     protected static function sous_requete_effectifs() : Builder {
         return DB
@@ -127,7 +167,7 @@ class StatistiqueService {
 
 
     //==================================================================================================================
-    // Par groupe : taux d'absence de chaque groupe
+    // Par groupe : taux d'absence de chaque groupe, avec sa couleur
     //==================================================================================================================
     public static function get_par_groupe(array $filtres) : array {
         $duree = self::duree_sql;
@@ -140,13 +180,16 @@ class StatistiqueService {
             ->keyBy('groupe_id');
 
         return self
-            ::base_seances($filtres)
+            ::avec_couleur(self::base_seances($filtres))
             ->leftJoinSub(self::sous_requete_effectifs(), 'eff', 'eff.groupe_id', '=', 'seances.groupe_id')
-            ->groupBy('groupes.id', 'groupes.nom')
-            ->selectRaw("groupes.id, groupes.nom, SUM(($duree) * COALESCE(eff.effectif, 0)) as heures_prevues")
+            ->groupBy('groupes.id', 'groupes.nom', 'groupes.cle')
+            ->selectRaw("groupes.id, groupes.nom, groupes.cle, MAX(" . self::couleur_sql . ") as couleur, SUM(($duree) * COALESCE(eff.effectif, 0)) as heures_prevues")
             ->get()
             ->map(fn($ligne) => [
+                'cle'            => $ligne->cle,
                 'nom'            => $ligne->nom,
+                'couleur'        => $ligne->couleur,
+                'url'            => route('groupe.detail', ['cle' => $ligne->cle]),
                 'nb_absences'    => (int) ($absences[$ligne->id]->nb_absences ?? 0),
                 'heures_absence' => round((float) ($absences[$ligne->id]->heures_absence ?? 0), 1),
                 'taux'           => self::taux((float) ($absences[$ligne->id]->heures_absence ?? 0), (float) $ligne->heures_prevues),
@@ -172,14 +215,19 @@ class StatistiqueService {
             ->keyBy('module_id');
 
         return self
-            ::base_seances($filtres)
+            ::avec_couleur(self::base_seances($filtres))
             ->join('modules', 'modules.id', '=', 'seances.module_id')
             ->leftJoinSub(self::sous_requete_effectifs(), 'eff', 'eff.groupe_id', '=', 'seances.groupe_id')
-            ->groupBy('modules.id', 'modules.code', 'modules.intitule')
-            ->selectRaw("modules.id, modules.code, modules.intitule, COUNT(DISTINCT seances.id) as nb_seances, SUM(($duree) * COALESCE(eff.effectif, 0)) as heures_prevues")
+            ->groupBy('modules.id', 'modules.code', 'modules.intitule', 'modules.cle')
+            ->selectRaw("modules.id, modules.code, modules.intitule, modules.cle, MAX(" . self::couleur_sql . ") as couleur, COUNT(DISTINCT seances.id) as nb_seances, SUM(($duree) * COALESCE(eff.effectif, 0)) as heures_prevues")
             ->get()
             ->map(fn($ligne) => [
+                'cle'            => $ligne->cle,
+                'code'           => $ligne->code,
+                'intitule'       => $ligne->intitule,
                 'module'         => "{$ligne->code} — {$ligne->intitule}",
+                'couleur'        => $ligne->couleur,
+                'url'            => route('module.detail', ['cle' => $ligne->cle]),
                 'nb_seances'     => (int) $ligne->nb_seances,
                 'nb_absences'    => (int) ($absences[$ligne->id]->nb_absences ?? 0),
                 'heures_absence' => round((float) ($absences[$ligne->id]->heures_absence ?? 0), 1),
@@ -188,6 +236,92 @@ class StatistiqueService {
             ->sortByDesc('taux')
             ->values()
             ->all();
+    }
+
+
+
+    //==================================================================================================================
+    // Par type de séance : Cours, TD, TP
+    //==================================================================================================================
+    public static function get_par_type(array $filtres) : array {
+        $duree = self::duree_sql;
+
+        $absences = self
+            ::base_absences($filtres)
+            ->groupBy('seances.type')
+            ->selectRaw("seances.type, COUNT(*) as nb_absences, SUM($duree) as heures_absence")
+            ->get()
+            ->keyBy('type');
+
+        return self
+            ::base_seances($filtres)
+            ->leftJoinSub(self::sous_requete_effectifs(), 'eff', 'eff.groupe_id', '=', 'seances.groupe_id')
+            ->groupBy('seances.type')
+            ->selectRaw("seances.type, COUNT(*) as nb_seances, SUM(($duree) * COALESCE(eff.effectif, 0)) as heures_prevues")
+            ->get()
+            ->map(fn($ligne) => [
+                'type'        => $ligne->type,
+                'nb_seances'  => (int) $ligne->nb_seances,
+                'nb_absences' => (int) ($absences[$ligne->type]->nb_absences ?? 0),
+                'taux'        => self::taux((float) ($absences[$ligne->type]->heures_absence ?? 0), (float) $ligne->heures_prevues),
+            ])
+            ->sortByDesc('taux')
+            ->values()
+            ->all();
+    }
+
+
+
+    //==================================================================================================================
+    // Par créneau : jour de la semaine × heure de début (carte de chaleur)
+    //==================================================================================================================
+    public static function get_par_creneau(array $filtres) : array {
+        $duree = self::duree_sql;
+
+        $prevues = self
+            ::base_seances($filtres)
+            ->leftJoinSub(self::sous_requete_effectifs(), 'eff', 'eff.groupe_id', '=', 'seances.groupe_id')
+            ->groupByRaw('WEEKDAY(seances.date), seances.heure_debut')
+            ->selectRaw("WEEKDAY(seances.date) as jour, TIME_FORMAT(seances.heure_debut, '%H:%i') as heure, SUM(($duree) * COALESCE(eff.effectif, 0)) as heures_prevues")
+            ->get();
+
+        $absences = self
+            ::base_absences($filtres)
+            ->groupByRaw('WEEKDAY(seances.date), seances.heure_debut')
+            ->selectRaw("WEEKDAY(seances.date) as jour, TIME_FORMAT(seances.heure_debut, '%H:%i') as heure, SUM($duree) as heures_absence")
+            ->get()
+            ->keyBy(fn($ligne) => "{$ligne->jour}-{$ligne->heure}");
+
+        $heures = $prevues->pluck('heure')
+                          ->unique()
+                          ->sort()
+                          ->values()
+                          ->all();
+
+        $cellules = [];
+
+        foreach ($heures as $heure) {
+            $ligne = [];
+
+            foreach (array_keys(self::jours_semaine) as $jour) {
+                $prevu = $prevues->first(fn($valeur) => (int) $valeur->jour === $jour && $valeur->heure === $heure);
+
+                $ligne[] = $prevu && $prevu->heures_prevues > 0
+                    ? self::taux((float) ($absences["{$jour}-{$heure}"]->heures_absence ?? 0), (float) $prevu->heures_prevues)
+                    : null;
+            }
+
+            $cellules[] = $ligne;
+        }
+
+        $valeurs = array_filter(array_merge(...($cellules ?: [[]])), fn($valeur) => $valeur !== null);
+
+        return [
+            'jours'    => self::jours_semaine,
+            'heures'   => $heures,
+            'cellules' => $cellules,
+            'max'      => $valeurs ? max($valeurs) : 0,
+        ];
     }
 
 
@@ -208,12 +342,13 @@ class StatistiqueService {
             ->pluck('heures', 'groupe_id');
 
         return self
-            ::base_absences($filtres)
+            ::avec_couleur(self::base_absences($filtres))
             ->join('etudiants', 'etudiants.id', '=', 'absences.etudiant_id')
             ->groupBy('etudiants.id', 'etudiants.cle', 'etudiants.cne', 'etudiants.nom', 'etudiants.prenom')
             ->selectRaw("
                 etudiants.cle, etudiants.cne, etudiants.nom, etudiants.prenom,
                 MAX(groupes.nom) as groupe, MAX(seances.groupe_id) as groupe_id,
+                MAX(" . self::couleur_sql . ") as couleur,
                 COUNT(*) as nb_absences,
                 SUM(1 - absences.justifiee) as nb_non_justifiees,
                 SUM($duree) as heures_absence
@@ -226,6 +361,7 @@ class StatistiqueService {
                 'cne'               => $ligne->cne,
                 'nom_complet'       => trim("{$ligne->prenom} " . mb_strtoupper($ligne->nom)),
                 'groupe'            => $ligne->groupe,
+                'couleur'           => $ligne->couleur,
                 'nb_absences'       => (int) $ligne->nb_absences,
                 'nb_non_justifiees' => (int) $ligne->nb_non_justifiees,
                 'heures_absence'    => round((float) $ligne->heures_absence, 1),
@@ -282,6 +418,41 @@ class StatistiqueService {
                                 ->all(),
             'valeurs' => $lignes->map(fn($ligne) => (int) $ligne->total)
                                 ->all(),
+        ];
+    }
+
+
+
+    //==================================================================================================================
+    // Taux d'absence par semaine : comparable d'une semaine à l'autre, même si le nombre de séances varie
+    //==================================================================================================================
+    public static function get_evolution_taux_par_semaine(array $filtres) : array {
+        $duree = self::duree_sql;
+
+        $prevues = self
+            ::base_seances($filtres)
+            ->leftJoinSub(self::sous_requete_effectifs(), 'eff', 'eff.groupe_id', '=', 'seances.groupe_id')
+            ->groupByRaw('YEARWEEK(seances.date, 3)')
+            ->selectRaw("YEARWEEK(seances.date, 3) as semaine, MIN(seances.date) as premier_jour, SUM(($duree) * COALESCE(eff.effectif, 0)) as heures_prevues")
+            ->orderBy('semaine')
+            ->get();
+
+        $absences = self
+            ::base_absences($filtres)
+            ->groupByRaw('YEARWEEK(seances.date, 3)')
+            ->selectRaw("YEARWEEK(seances.date, 3) as semaine, COUNT(*) as nb_absences, SUM($duree) as heures_absence")
+            ->get()
+            ->keyBy('semaine');
+
+        return [
+            'labels'   => $prevues->map(fn($ligne) => Carbon::parse($ligne->premier_jour)
+                                                            ->startOfWeek()
+                                                            ->format('d/m'))
+                                  ->all(),
+            'taux'     => $prevues->map(fn($ligne) => self::taux((float) ($absences[$ligne->semaine]->heures_absence ?? 0), (float) $ligne->heures_prevues))
+                                  ->all(),
+            'absences' => $prevues->map(fn($ligne) => (int) ($absences[$ligne->semaine]->nb_absences ?? 0))
+                                  ->all(),
         ];
     }
 }

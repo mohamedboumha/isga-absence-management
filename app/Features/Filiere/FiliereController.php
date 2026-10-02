@@ -2,8 +2,9 @@
 
 namespace App\Features\Filiere;
 
-use App\Features\Cycle\CycleService;
+use App\_Core\Services\NotificationService;
 use App\_Core\Services\RendersService;
+use App\Features\Cycle\CycleService;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
@@ -41,16 +42,15 @@ class FiliereController extends Controller {
             abort(403, "Cette filière ne peut pas être modifiée.");
         }
 
-        $titre_page = $filiere->exists
-            ? "Filière {$filiere->code} — {$filiere->nom}"
-            : "Nouvelle filière";
+        $titre_page = $filiere->exists ? "Filière {$filiere->code} — {$filiere->nom}" : "Nouvelle filière";
 
         return Inertia::render(self::page_detail, [
-            'mode_vue'    => $mode_vue,
-            'titre_page'  => $titre_page,
-            'breadcrumbs' => self::get_breadcrumbs($titre_page, $filiere->exists ? route(self::route_detail, ['cle' => $filiere->cle]) : route(self::route_detail)),
-            'item'        => self::item_to_array($filiere),
-            'cycles'      => CycleService::get_cycles_pour_select(),
+            'mode_vue'     => $mode_vue,
+            'titre_page'   => $titre_page,
+            'breadcrumbs'  => self::get_breadcrumbs($titre_page, $filiere->exists ? route(self::route_detail, ['cle' => $filiere->cle]) : route(self::route_detail)),
+            'item'         => self::item_to_array($filiere),
+            'cycles'       => CycleService::get_cycles_pour_select(),
+            'consultation' => $mode_vue === RendersService::mode_consultation ? FiliereConsultationService::get($filiere) : null,
         ]);
     }
 
@@ -59,6 +59,8 @@ class FiliereController extends Controller {
     public function update(FiliereRequest $request, ?string $cle = null) : RedirectResponse {
         $filiere = FiliereService::process_update_or_create($cle, $request->validated());
 
+        NotificationService::succes($cle ? "Filière enregistrée." : "Filière créée.");
+
         return to_route(self::route_detail, ['cle' => $filiere->cle]);
     }
 
@@ -66,6 +68,8 @@ class FiliereController extends Controller {
 
     public function delete(string $cle) : RedirectResponse {
         FiliereService::process_delete($cle);
+
+        NotificationService::succes("Filière supprimée.");
 
         return to_route(self::route_list);
     }

@@ -115,6 +115,11 @@
         <!--=====================================================================================================-->
         <div v-if="consultation" class="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
             <div class="flex min-w-0 flex-col gap-6">
+                <!--=============================================================================================-->
+                <!-- Calendrier de présence de l'année -->
+                <!--=============================================================================================-->
+                <CalendrierPresence v-if="consultation.calendrier" :calendrier="consultation.calendrier"/>
+
                 <CarteSection titre="Absences récentes" :sous_titre="consultation.resume.periode" :avec_marges="false">
                     <div
                         v-for="(absence, index) in consultation.absences"
@@ -252,8 +257,10 @@ import {computed} from 'vue';
 import {Head, Link, useForm} from '@inertiajs/vue3';
 import {toast} from 'vue-sonner';
 import {Button} from '@/components/ui/button';
+import CalendrierPresence from '@/_core/detail/calendrier-presence.vue';
 import CarteSection from '@/_core/detail/carte-section.vue';
 import Indicateur from '@/_core/detail/indicateur.vue';
+import type {CalendrierPresence as Calendrier} from '@/_core/detail/registre';
 import {formater_nombre, tonalite_taux} from '@/_core/detail/taux';
 import {supprimer_avec_confirmation} from '@/_core/dialogs/actions';
 import BoutonDocument from '@/_core/documents/bouton-document.vue';
@@ -314,6 +321,7 @@ interface ConsultationEtudiant {
         taux: number;
         justificatifs_en_attente: number;
     };
+    calendrier: Calendrier | null;
     absences: AbsenceEtudiant[];
     justificatifs: JustificatifEtudiant[];
     liens: {

@@ -22,6 +22,7 @@ class DashboardController extends Controller {
             return Inertia::render('dashboard/dashboard-administration', [
                 'titre_page'  => "Tableau de bord",
                 'breadcrumbs' => $breadcrumbs,
+                'prenom'      => $user->prenom,
                 ...DashboardService::get_donnees_administration(),
             ]);
         }

@@ -82,132 +82,120 @@
             </form>
         </CarteSection>
 
-        <!--=====================================================================================================-->
-        <!-- Consultation : sections liées à gauche, "En bref" à droite -->
-        <!--=====================================================================================================-->
-        <div v-if="consultation" class="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
-            <div class="flex min-w-0 flex-col gap-6">
-                <CarteSection
-                    titre="Étudiants"
-                    sous_titre="Du plus absent au moins absent, sur l'année du groupe"
-                    :compteur="consultation.etudiants.length"
-                    :lien="consultation.liens.etudiants ? { url: consultation.liens.etudiants, label: 'Voir dans la liste' } : null"
-                    :avec_marges="false"
-                >
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-sm">
-                            <thead>
-                            <tr class="text-muted-foreground border-b text-xs">
-                                <th class="h-10 px-5 text-left font-medium">Étudiant</th>
-                                <th class="h-10 px-3 text-right font-medium">Absences</th>
-                                <th class="h-10 px-3 text-right font-medium">Non justifiées</th>
-                                <th class="h-10 px-3 text-right font-medium">Heures</th>
-                                <th class="h-10 px-5 text-right font-medium">Taux</th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            <tr
-                                v-for="etudiant in consultation.etudiants"
-                                :key="etudiant.cne"
-                                class="border-b last:border-0"
-                                :class="{ 'hover:bg-muted/50 cursor-pointer': etudiant.url }"
-                                @click="etudiant.url && router.visit(etudiant.url)"
-                            >
-                                <td class="h-14 px-5">
-                                    <CellulePersonne :nom="etudiant.nom_complet" :sous_texte="etudiant.cne"/>
-                                </td>
-                                <td class="px-3 text-right tabular-nums">{{ etudiant.nb_absences }}</td>
-                                <td class="px-3 text-right tabular-nums"
-                                    :class="{ 'text-absent font-medium': etudiant.nb_non_justifiees }">
-                                    {{ etudiant.nb_non_justifiees }}
-                                </td>
-                                <td class="px-3 text-right tabular-nums">{{ formater_nombre(etudiant.heures) }} h</td>
-                                <td class="px-5 text-right font-semibold tabular-nums"
-                                    :class="`text-${tonalite_taux(etudiant.taux)}`">
-                                    {{ formater_nombre(etudiant.taux) }} %
-                                </td>
-                            </tr>
+        <template v-if="consultation">
+            <!--=================================================================================================-->
+            <!-- Registre du mois : toute la largeur -->
+            <!--=================================================================================================-->
+            <RegistreGroupe :registre="consultation.registre"/>
 
-                            <tr v-if="!consultation.etudiants.length">
-                                <td colspan="5" class="text-muted-foreground px-5 py-8 text-center">Aucun étudiant
-                                    inscrit dans ce groupe.
-                                </td>
-                            </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </CarteSection>
+            <!--=================================================================================================-->
+            <!-- Sections liées à gauche, "En bref" à droite -->
+            <!--=================================================================================================-->
+            <div class="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+                <div class="flex min-w-0 flex-col gap-6">
+                    <CarteSection
+                        titre="Étudiants"
+                        sous_titre="Du plus absent au moins absent, sur l'année du groupe"
+                        :compteur="consultation.etudiants.length"
+                        :lien="consultation.liens.etudiants ? { url: consultation.liens.etudiants, label: 'Voir dans la liste' } : null"
+                        :avec_marges="false"
+                    >
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm">
+                                <thead>
+                                <tr class="text-muted-foreground border-b text-xs">
+                                    <th class="h-10 px-5 text-left font-medium">Étudiant</th>
+                                    <th class="h-10 px-3 text-right font-medium">Absences</th>
+                                    <th class="h-10 px-3 text-right font-medium">Non justifiées</th>
+                                    <th class="h-10 px-3 text-right font-medium">Heures</th>
+                                    <th class="h-10 px-5 text-right font-medium">Taux</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr
+                                    v-for="etudiant in consultation.etudiants"
+                                    :key="etudiant.cne"
+                                    class="border-b last:border-0"
+                                    :class="{ 'hover:bg-muted/50 cursor-pointer': etudiant.url }"
+                                    @click="etudiant.url && router.visit(etudiant.url)"
+                                >
+                                    <td class="h-14 px-5">
+                                        <CellulePersonne :nom="etudiant.nom_complet" :sous_texte="etudiant.cne"/>
+                                    </td>
+                                    <td class="px-3 text-right tabular-nums">{{ etudiant.nb_absences }}</td>
+                                    <td class="px-3 text-right tabular-nums"
+                                        :class="{ 'text-absent font-medium': etudiant.nb_non_justifiees }">
+                                        {{ etudiant.nb_non_justifiees }}
+                                    </td>
+                                    <td class="px-3 text-right tabular-nums">{{ formater_nombre(etudiant.heures) }} h
+                                    </td>
+                                    <td class="px-5 text-right font-semibold tabular-nums"
+                                        :class="`text-${tonalite_taux(etudiant.taux)}`">
+                                        {{ formater_nombre(etudiant.taux) }} %
+                                    </td>
+                                </tr>
 
-                <CarteSection titre="Séances"
-                              :lien="{ url: consultation.liens.seances, label: 'Voir toutes les séances' }"
-                              :avec_marges="false">
-                    <div v-for="bloc in blocs_seances" :key="bloc.titre" class="border-b last:border-0">
-                        <p class="text-muted-foreground bg-muted/40 px-5 py-2 text-xs font-medium">{{ bloc.titre }}</p>
+                                <tr v-if="!consultation.etudiants.length">
+                                    <td colspan="5" class="text-muted-foreground px-5 py-8 text-center">Aucun étudiant
+                                        inscrit dans ce groupe.
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </CarteSection>
 
-                        <Link
-                            v-for="seance in bloc.seances"
-                            :key="seance.cle"
-                            :href="seance.url"
-                            class="hover:bg-muted/50 flex flex-wrap items-center gap-x-4 gap-y-1 border-t px-5 py-3 text-sm first-of-type:border-t-0"
-                        >
-                            <span class="w-36 shrink-0 tabular-nums">
-                                <span class="font-medium">{{ seance.date }}</span>
-                                <span class="text-muted-foreground block text-xs">{{ seance.horaire }}</span>
-                            </span>
+                    <CarteSection titre="Séances"
+                                  :lien="{ url: consultation.liens.seances, label: 'Voir toutes les séances' }"
+                                  :avec_marges="false">
+                        <div v-for="bloc in blocs_seances" :key="bloc.titre" class="border-b last:border-0">
+                            <p class="text-muted-foreground bg-muted/40 px-5 py-2 text-xs font-medium">{{
+                                    bloc.titre
+                                }}</p>
 
-                            <span class="flex min-w-0 flex-1 items-center gap-2">
-                                <BadgeCouleur :couleur="seance.couleur" :label="seance.module"/>
-                                <span class="truncate">{{ seance.intitule }}</span>
-                                <span class="text-muted-foreground shrink-0 text-xs">{{ seance.type }}</span>
-                            </span>
+                            <LigneSeance v-for="seance in bloc.seances" :key="seance.cle" :seance="seance"/>
 
-                            <span class="text-muted-foreground hidden w-40 truncate md:block">{{
-                                    seance.enseignant
-                                }}</span>
+                            <p v-if="!bloc.seances.length" class="text-muted-foreground px-5 py-4 text-sm">{{
+                                    bloc.vide
+                                }}</p>
+                        </div>
+                    </CarteSection>
+                </div>
 
-                            <StatutPill :statut="seance.statut"/>
-                        </Link>
+                <aside class="order-first lg:sticky lg:top-4 lg:order-none">
+                    <CarteSection titre="En bref">
+                        <div class="flex flex-col gap-5">
+                            <div class="flex flex-col gap-1 text-sm">
+                                <span class="font-medium">{{ consultation.resume.niveau_libelle }}</span>
+                                <span class="text-muted-foreground">{{ consultation.resume.cycle }}</span>
+                            </div>
 
-                        <p v-if="!bloc.seances.length" class="text-muted-foreground px-5 py-4 text-sm">{{
-                                bloc.vide
-                            }}</p>
-                    </div>
-                </CarteSection>
+                            <Indicateur
+                                label="Taux d'absence"
+                                :valeur="formater_nombre(consultation.resume.taux)"
+                                unite="%"
+                                :tonalite="tonalite_taux(consultation.resume.taux)"
+                            />
+
+                            <div class="grid grid-cols-2 gap-4">
+                                <Indicateur label="Effectif" :valeur="consultation.resume.effectif"/>
+                                <Indicateur
+                                    label="Séances tenues"
+                                    :valeur="consultation.resume.nb_seances"
+                                    :detail="`${formater_nombre(consultation.resume.heures)} h`"
+                                />
+                                <Indicateur label="Absences" :valeur="consultation.resume.nb_absences"/>
+                                <Indicateur
+                                    label="Non justifiées"
+                                    :valeur="consultation.resume.nb_non_justifiees"
+                                    :tonalite="consultation.resume.nb_non_justifiees ? 'absent' : 'neutre'"
+                                />
+                            </div>
+                        </div>
+                    </CarteSection>
+                </aside>
             </div>
-
-            <aside class="order-first lg:sticky lg:top-4 lg:order-none">
-                <CarteSection titre="En bref">
-                    <div class="flex flex-col gap-5">
-                        <div class="flex flex-col gap-1 text-sm">
-                            <span class="font-medium">{{ consultation.resume.niveau_libelle }}</span>
-                            <span class="text-muted-foreground">{{ consultation.resume.cycle }}</span>
-                        </div>
-
-                        <Indicateur
-                            label="Taux d'absence"
-                            :valeur="formater_nombre(consultation.resume.taux)"
-                            unite="%"
-                            :tonalite="tonalite_taux(consultation.resume.taux)"
-                        />
-
-                        <div class="grid grid-cols-2 gap-4">
-                            <Indicateur label="Effectif" :valeur="consultation.resume.effectif"/>
-                            <Indicateur
-                                label="Séances tenues"
-                                :valeur="consultation.resume.nb_seances"
-                                :detail="`${formater_nombre(consultation.resume.heures)} h`"
-                            />
-                            <Indicateur label="Absences" :valeur="consultation.resume.nb_absences"/>
-                            <Indicateur
-                                label="Non justifiées"
-                                :valeur="consultation.resume.nb_non_justifiees"
-                                :tonalite="consultation.resume.nb_non_justifiees ? 'absent' : 'neutre'"
-                            />
-                        </div>
-                    </div>
-                </CarteSection>
-            </aside>
-        </div>
+        </template>
     </div>
 </template>
 
@@ -219,7 +207,11 @@ import {toast} from 'vue-sonner';
 import {Button} from '@/components/ui/button';
 import CarteSection from '@/_core/detail/carte-section.vue';
 import Indicateur from '@/_core/detail/indicateur.vue';
+import LigneSeance from '@/_core/detail/ligne-seance.vue';
+import type {RegistreGroupe as Registre} from '@/_core/detail/registre';
+import RegistreGroupe from '@/_core/detail/registre-groupe.vue';
 import {formater_nombre, tonalite_taux} from '@/_core/detail/taux';
+import type {SeanceResume} from '@/_core/detail/types';
 import {supprimer_avec_confirmation} from '@/_core/dialogs/actions';
 import BoutonDocument from '@/_core/documents/bouton-document.vue';
 import BadgeCouleur from '@/_core/renders/badge-couleur.vue';
@@ -248,19 +240,6 @@ interface EtudiantGroupe {
     url: string | null;
 }
 
-interface SeanceGroupe {
-    cle: string;
-    date: string;
-    horaire: string;
-    type: string;
-    module: string;
-    intitule: string;
-    couleur: string;
-    enseignant: string;
-    statut: string;
-    url: string;
-}
-
 interface ConsultationGroupe {
     resume: {
         niveau_code: string;
@@ -276,9 +255,10 @@ interface ConsultationGroupe {
         nb_non_justifiees: number;
         taux: number;
     };
+    registre: Registre;
     etudiants: EtudiantGroupe[];
-    seances_a_venir: SeanceGroupe[];
-    seances_recentes: SeanceGroupe[];
+    seances_a_venir: SeanceResume[];
+    seances_recentes: SeanceResume[];
     liens: {
         etudiants: string | null;
         seances: string;

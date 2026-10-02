@@ -2,6 +2,7 @@
 
 namespace App\Features\Module;
 
+use App\_Core\Services\NotificationService;
 use App\_Core\Services\RendersService;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
@@ -45,10 +46,11 @@ class ModuleController extends Controller {
             : "Nouveau module";
 
         return Inertia::render(self::page_detail, [
-            'mode_vue'    => $mode_vue,
-            'titre_page'  => $titre_page,
-            'breadcrumbs' => self::get_breadcrumbs($titre_page, $module->exists ? route(self::route_detail, ['cle' => $module->cle]) : route(self::route_detail)),
-            'item'        => self::item_to_array($module),
+            'mode_vue'     => $mode_vue,
+            'titre_page'   => $titre_page,
+            'breadcrumbs'  => self::get_breadcrumbs($titre_page, $module->exists ? route(self::route_detail, ['cle' => $module->cle]) : route(self::route_detail)),
+            'item'         => self::item_to_array($module),
+            'consultation' => $mode_vue === RendersService::mode_consultation ? ModuleConsultationService::get($module) : null,
             ...ModuleService::get_selects(),
         ]);
     }
@@ -58,6 +60,8 @@ class ModuleController extends Controller {
     public function update(ModuleRequest $request, ?string $cle = null) : RedirectResponse {
         $module = ModuleService::process_update_or_create($cle, $request->validated());
 
+        NotificationService::succes($cle ? "Module enregistré." : "Module créé.");
+
         return to_route(self::route_detail, ['cle' => $module->cle]);
     }
 
@@ -65,6 +69,8 @@ class ModuleController extends Controller {
 
     public function delete(string $cle) : RedirectResponse {
         ModuleService::process_delete($cle);
+
+        NotificationService::succes("Module supprimé.");
 
         return to_route(self::route_list);
     }

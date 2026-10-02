@@ -2,6 +2,7 @@
 
 namespace App\Features\Enseignant;
 
+use App\_Core\Services\EmailService;
 use App\_Core\Services\NotificationService;
 use App\_Core\Services\RendersService;
 use App\Http\Controllers\Controller;
@@ -58,9 +59,18 @@ class EnseignantController extends Controller {
     public function update(EnseignantRequest $request, ?string $cle = null) : RedirectResponse {
         $enseignant = EnseignantService::process_update_or_create($cle, $request->validated());
 
-        NotificationService::succes($cle
-                                        ? "Enseignant enregistré."
-                                        : "Enseignant créé. Un lien pour choisir son mot de passe lui a été envoyé.");
+        //==============================================================================================================
+        // Nouvel enseignant : le lien "choisir mon mot de passe" ; la fiche est créée même si l'envoi échoue
+        //==============================================================================================================
+        if (!$cle) {
+            $statut = EmailService::envoyer_lien_mot_de_passe($enseignant->email);
+
+            $statut === EmailService::echec
+                ? NotificationService::avertissement("Enseignant créé, mais l'e-mail n'a pas pu être envoyé à {$enseignant->email}. Utilisez « Renvoyer le lien » sur son compte (Utilisateurs) un peu plus tard.")
+                : NotificationService::succes("Enseignant créé. Un lien pour choisir son mot de passe a été envoyé à {$enseignant->email}.");
+        } else {
+            NotificationService::succes("Enseignant enregistré.");
+        }
 
         return to_route(self::route_detail, ['cle' => $enseignant->cle]);
     }
@@ -80,7 +90,9 @@ class EnseignantController extends Controller {
     protected static function item_to_array(Enseignant $enseignant) : array {
         return [
             ...$enseignant->toArray(),
-            'modules'        => $enseignant->exists ? $enseignant->modules()->pluck('modules.id')->all() : [],
+            'modules'        => $enseignant->exists ? $enseignant->modules()
+                                                                 ->pluck('modules.id')
+                                                                 ->all() : [],
             'compte_actif'   => $enseignant->user?->actif ?? false,
             'can_be_deleted' => $enseignant->exists && $enseignant->can_be_deleted(),
         ];

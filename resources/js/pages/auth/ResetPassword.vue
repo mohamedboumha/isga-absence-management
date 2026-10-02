@@ -1,90 +1,85 @@
-<script setup lang="ts">
-import { Form, Head } from '@inertiajs/vue3';
-import { ref } from 'vue';
-import InputError from '@/components/InputError.vue';
-import PasswordInput from '@/components/PasswordInput.vue';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Spinner } from '@/components/ui/spinner';
-import { update } from '@/routes/password';
-
-defineOptions({
-    layout: {
-        title: 'Reset password',
-        description: 'Please enter your new password below',
-    },
-});
-
-const props = defineProps<{
-    token: string;
-    email: string;
-    passwordRules: string;
-}>();
-
-const inputEmail = ref(props.email);
-</script>
-
 <template>
-    <Head title="Reset password" />
+    <Head title="Nouveau mot de passe"/>
 
     <Form
         v-bind="update.form()"
         :transform="(data) => ({ ...data, token, email })"
         :reset-on-success="['password', 'password_confirmation']"
+        class="flex flex-col gap-5"
         v-slot="{ errors, processing }"
     >
-        <div class="grid gap-6">
-            <div class="grid gap-2">
-                <Label for="email">Email</Label>
-                <Input
-                    id="email"
-                    type="email"
-                    name="email"
-                    autocomplete="email"
-                    v-model="inputEmail"
-                    class="mt-1 block w-full"
-                    readonly
-                />
-                <InputError :message="errors.email" class="mt-2" />
-            </div>
-
-            <div class="grid gap-2">
-                <Label for="password">Password</Label>
-                <PasswordInput
-                    id="password"
-                    name="password"
-                    autocomplete="new-password"
-                    class="mt-1 block w-full"
-                    autofocus
-                    placeholder="Password"
-                    :passwordrules="passwordRules"
-                />
-                <InputError :message="errors.password" />
-            </div>
-
-            <div class="grid gap-2">
-                <Label for="password_confirmation"> Confirm password </Label>
-                <PasswordInput
-                    id="password_confirmation"
-                    name="password_confirmation"
-                    autocomplete="new-password"
-                    class="mt-1 block w-full"
-                    placeholder="Confirm password"
-                    :passwordrules="passwordRules"
-                />
-                <InputError :message="errors.password_confirmation" />
-            </div>
-
-            <Button
-                type="submit"
-                class="mt-4 w-full"
-                :disabled="processing"
-                data-test="reset-password-button"
-            >
-                <Spinner v-if="processing" />
-                Reset password
-            </Button>
+        <!--=====================================================================================================-->
+        <!-- Le compte concerné (lecture seule) -->
+        <!--=====================================================================================================-->
+        <div class="grid gap-2">
+            <Label for="email">Adresse e-mail</Label>
+            <Input id="email" type="email" name="email" autocomplete="username" :model-value="email" readonly
+                   class="bg-muted/40 text-muted-foreground h-11 border-transparent"/>
+            <InputError :message="errors.email"/>
         </div>
+
+        <!--=====================================================================================================-->
+        <!-- Nouveau mot de passe -->
+        <!--=====================================================================================================-->
+        <div class="grid gap-2">
+            <Label for="password">Nouveau mot de passe</Label>
+            <PasswordInput
+                id="password"
+                name="password"
+                autocomplete="new-password"
+                autofocus
+                required
+                class="bg-muted/60 h-11 border-transparent"
+                :passwordrules="passwordRules"
+                :aria-invalid="Boolean(errors.password)"
+            />
+            <InputError :message="errors.password"/>
+        </div>
+
+        <div class="grid gap-2">
+            <Label for="password_confirmation">Confirmer le mot de passe</Label>
+            <PasswordInput
+                id="password_confirmation"
+                name="password_confirmation"
+                autocomplete="new-password"
+                required
+                class="bg-muted/60 h-11 border-transparent"
+                :passwordrules="passwordRules"
+                :aria-invalid="Boolean(errors.password_confirmation)"
+            />
+            <InputError :message="errors.password_confirmation"/>
+        </div>
+
+        <Button type="submit" class="h-11" :disabled="processing" data-test="reset-password-button">
+            <Spinner v-if="processing" class="size-4"/>
+            Enregistrer mon mot de passe
+        </Button>
     </Form>
 </template>
+
+
+<script setup lang="ts">
+import {Form, Head} from '@inertiajs/vue3';
+import InputError from '@/components/InputError.vue';
+import PasswordInput from '@/components/PasswordInput.vue';
+import {Button} from '@/components/ui/button';
+import {Input} from '@/components/ui/input';
+import {Label} from '@/components/ui/label';
+import {Spinner} from '@/components/ui/spinner';
+import {update} from '@/routes/password';
+
+interface ResetPasswordInterface {
+    token: string;
+    email: string;
+    passwordRules: string;
+}
+
+const props = defineProps<ResetPasswordInterface>();
+
+defineOptions({
+    layout: {
+        title: 'Choisissez votre mot de passe',
+        description: 'Il vous servira à vous connecter à l\'application de gestion des absences.',
+    },
+});
+</script>

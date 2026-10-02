@@ -61,7 +61,7 @@ class GroupeConsultationService {
             ->get();
 
         return [
-            'resume'           => [
+            'resume'   => [
                 'niveau_code'       => $groupe->niveau_etude->code,
                 'niveau_libelle'    => $groupe->niveau_etude->libelle,
                 'couleur'           => $groupe->niveau_etude->couleur_effective,
@@ -75,6 +75,12 @@ class GroupeConsultationService {
                 'nb_non_justifiees' => $rapport['total']['nb_non_justifiees'],
                 'taux'              => $rapport['total']['taux'],
             ],
+
+            //==========================================================================================================
+            // Registre du mois (?mois=2026-10&module=12)
+            //==========================================================================================================
+            'registre' => GroupeRegistreService::get($groupe, request()->query('mois'), request()->query('module')),
+
             'etudiants'        => $etudiants,
             'seances_a_venir'  => $a_venir->map(fn(Seance $seance) => self::seance_to_array($seance))
                                           ->all(),

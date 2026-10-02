@@ -15,9 +15,6 @@
                             item.couleur_source
                         }}</span>
                 </div>
-
-                <p v-if="item.precedents.length" class="text-muted-foreground text-sm">On y accède depuis :
-                    {{ item.precedents.join(', ') }}</p>
             </div>
 
             <div v-if="mode_vue === renders.mode_consultation" class="flex flex-wrap gap-2">
@@ -93,9 +90,9 @@
             </CarteSection>
 
             <!--=================================================================================================-->
-            <!-- Parcours -->
+            <!-- Année suivante : champ modifiable (création, modification) -->
             <!--=================================================================================================-->
-            <CarteSection titre="Année suivante">
+            <CarteSection v-if="is_editable" titre="Année suivante">
                 <p v-if="est_derniere_annee" class="text-muted-foreground text-sm">Dernière année du cycle : les
                     étudiants admis obtiennent leur diplôme.</p>
 
@@ -123,6 +120,117 @@
                 </Button>
             </div>
         </form>
+
+        <!--=====================================================================================================-->
+        <!-- Consultation : sections liées à gauche, "En bref" à droite -->
+        <!--=====================================================================================================-->
+        <div v-if="consultation" class="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+            <div class="flex min-w-0 flex-col gap-6">
+                <!--=============================================================================================-->
+                <!-- Groupes de l'année -->
+                <!--=============================================================================================-->
+                <CarteSection
+                    titre="Groupes cette année"
+                    :sous_titre="consultation.resume.annee"
+                    :compteur="consultation.groupes.length"
+                    :lien="{ url: consultation.liens.groupes, label: 'Voir dans la liste' }"
+                    :avec_marges="false"
+                >
+                    <Link
+                        v-for="groupe in consultation.groupes"
+                        :key="groupe.url"
+                        :href="groupe.url"
+                        class="hover:bg-muted/50 flex items-center justify-between gap-3 border-b px-5 py-3 text-sm last:border-0"
+                    >
+                        <BadgeCouleur :couleur="item.couleur ?? '#475569'" :label="groupe.nom"/>
+                        <span class="text-muted-foreground tabular-nums">{{ groupe.effectif }} étudiant(s)</span>
+                    </Link>
+
+                    <p v-if="!consultation.groupes.length" class="text-muted-foreground px-5 py-8 text-center text-sm">
+                        Aucun groupe de ce niveau cette année.</p>
+                </CarteSection>
+
+                <!--=============================================================================================-->
+                <!-- Modules par semestre -->
+                <!--=============================================================================================-->
+                <CarteSection
+                    titre="Modules par semestre"
+                    :compteur="consultation.resume.nb_modules"
+                    :lien="{ url: consultation.liens.modules, label: 'Voir dans la liste' }"
+                    :avec_marges="false"
+                >
+                    <div v-for="semestre in consultation.semestres" :key="semestre.numero"
+                         class="border-b last:border-0">
+                        <p class="text-muted-foreground bg-muted/40 flex justify-between px-5 py-2 text-xs font-medium">
+                            <span>Semestre {{ semestre.numero }}</span>
+                            <span class="tabular-nums">{{ semestre.volume }} h</span>
+                        </p>
+
+                        <Link
+                            v-for="module in semestre.modules"
+                            :key="module.url"
+                            :href="module.url"
+                            class="hover:bg-muted/50 flex items-center gap-3 border-t px-5 py-3 text-sm first-of-type:border-t-0"
+                        >
+                            <BadgeCouleur :couleur="module.couleur" :label="module.code"/>
+                            <span class="min-w-0 flex-1 truncate">{{ module.intitule }}</span>
+                            <span class="text-muted-foreground shrink-0 tabular-nums">{{ module.volume }} h</span>
+                        </Link>
+
+                        <p v-if="!semestre.modules.length" class="text-muted-foreground px-5 py-4 text-sm">Aucun module
+                            ce semestre.</p>
+                    </div>
+                </CarteSection>
+
+                <!--=============================================================================================-->
+                <!-- Parcours : d'où viennent les étudiants, où ils vont ensuite -->
+                <!--=============================================================================================-->
+                <CarteSection titre="Parcours">
+                    <div class="grid gap-5 sm:grid-cols-2">
+                        <div class="flex flex-col gap-2">
+                            <span class="text-muted-foreground text-xs">On y accède depuis</span>
+
+                            <div v-if="consultation.parcours.precedents.length" class="flex flex-wrap gap-2">
+                                <Link v-for="precedent in consultation.parcours.precedents" :key="precedent.url"
+                                      :href="precedent.url" :title="precedent.libelle">
+                                    <BadgeCouleur :couleur="precedent.couleur" :label="precedent.code"/>
+                                </Link>
+                            </div>
+                            <span v-else class="text-sm">Première année (entrée dans le cycle)</span>
+                        </div>
+
+                        <div class="flex flex-col gap-2">
+                            <span class="text-muted-foreground text-xs">Année suivante</span>
+
+                            <span v-if="consultation.parcours.est_derniere_annee" class="text-sm">Diplôme (dernière année du cycle)</span>
+
+                            <div v-else-if="consultation.parcours.suivants.length" class="flex flex-wrap gap-2">
+                                <Link v-for="suivant in consultation.parcours.suivants" :key="suivant.url"
+                                      :href="suivant.url" :title="suivant.libelle">
+                                    <BadgeCouleur :couleur="suivant.couleur" :label="suivant.code"/>
+                                </Link>
+                            </div>
+
+                            <span v-else class="text-attente text-sm">Aucun niveau suivant défini : à compléter avant le passage d'année.</span>
+                        </div>
+                    </div>
+                </CarteSection>
+            </div>
+
+            <!--=================================================================================================-->
+            <!-- En bref : reste visible au défilement -->
+            <!--=================================================================================================-->
+            <aside class="order-first lg:sticky lg:top-4 lg:order-none">
+                <CarteSection titre="En bref" :sous_titre="consultation.resume.cycle">
+                    <div class="grid grid-cols-2 gap-4">
+                        <Indicateur label="Groupes" :valeur="consultation.resume.nb_groupes" detail="cette année"/>
+                        <Indicateur label="Étudiants" :valeur="consultation.resume.effectif" detail="cette année"/>
+                        <Indicateur label="Modules" :valeur="consultation.resume.nb_modules"/>
+                        <Indicateur label="Volume total" :valeur="consultation.resume.volume_total" unite="h"/>
+                    </div>
+                </CarteSection>
+            </aside>
+        </div>
     </div>
 </template>
 
@@ -133,6 +241,7 @@ import {Head, Link, useForm} from '@inertiajs/vue3';
 import {toast} from 'vue-sonner';
 import {Button} from '@/components/ui/button';
 import CarteSection from '@/_core/detail/carte-section.vue';
+import Indicateur from '@/_core/detail/indicateur.vue';
 import {supprimer_avec_confirmation} from '@/_core/dialogs/actions';
 import BadgeCouleur from '@/_core/renders/badge-couleur.vue';
 import ChampChaine from '@/_core/renders/champ-chaine.vue';
@@ -172,6 +281,39 @@ interface NiveauOption extends SelectOption {
     annee_cycle: number;
 }
 
+interface BadgeNiveau {
+    code: string;
+    libelle: string;
+    couleur: string;
+    url: string;
+}
+
+interface ConsultationNiveau {
+    resume: {
+        cycle: string;
+        annee: string | null;
+        nb_groupes: number;
+        effectif: number;
+        nb_modules: number;
+        volume_total: number;
+    };
+    groupes: { nom: string; effectif: number; url: string }[];
+    semestres: {
+        numero: number;
+        volume: number;
+        modules: { code: string; intitule: string; volume: number; couleur: string; url: string }[];
+    }[];
+    parcours: {
+        precedents: BadgeNiveau[];
+        suivants: BadgeNiveau[];
+        est_derniere_annee: boolean;
+    };
+    liens: {
+        groupes: string;
+        modules: string;
+    };
+}
+
 interface NiveauEtudeDetailInterface {
     mode_vue: ModeVue;
     titre_page: string;
@@ -179,6 +321,7 @@ interface NiveauEtudeDetailInterface {
     cycles: CycleOption[];
     filieres: FiliereOption[];
     niveaux: NiveauOption[];
+    consultation: ConsultationNiveau | null;
 }
 
 const props = defineProps<NiveauEtudeDetailInterface>();

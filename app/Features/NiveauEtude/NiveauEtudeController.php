@@ -10,8 +10,9 @@ use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
 
 class NiveauEtudeController extends Controller {
-    const string page_list    = 'niveau-etude/niveau-etude-list';
-    const string page_detail  = 'niveau-etude/niveau-etude-detail';
+    const string page_list   = 'niveau-etude/niveau-etude-list';
+    const string page_detail = 'niveau-etude/niveau-etude-detail';
+
     const string route_list   = 'niveaux-etudes.list';
     const string route_detail = 'niveau-etude.detail';
 
@@ -34,26 +35,20 @@ class NiveauEtudeController extends Controller {
 
         $niveau = $cle
             ? NiveauEtudeService::get_or_fail($cle)
-                                ->load(['cycle', 'filiere.cycle', 'suivants', 'precedents'])
-            : new NiveauEtude(['nb_semestres' => 2, 'annee_cycle' => 1]);
+            : new NiveauEtude(['annee_cycle' => 1, 'nb_semestres' => 2]);
 
-        $titre_page = $niveau->exists ? $niveau->libelle : "Nouveau niveau d'études";
+        if ($mode_vue === RendersService::mode_edit && !$niveau->can_be_updated()) {
+            abort(403, "Ce niveau ne peut pas être modifié.");
+        }
+
+        $titre_page = $niveau->exists ? "Niveau {$niveau->code}" : "Nouveau niveau d'études";
 
         return Inertia::render(self::page_detail, [
-            'mode_vue'    => $mode_vue,
-            'titre_page'  => $titre_page,
-            'breadcrumbs' => self::get_breadcrumbs($titre_page, $niveau->exists ? route(self::route_detail, ['cle' => $niveau->cle]) : route(self::route_detail)),
-            'item'        => [
-                ...$niveau->toArray(),
-                'couleur'            => $niveau->exists ? $niveau->couleur_effective : null,
-                'couleur_source'     => $niveau->exists ? ($niveau->filiere ? "de la filière {$niveau->filiere->code}" : "du cycle {$niveau->cycle->nom}") : null,
-                'suivants'           => $niveau->exists ? $niveau->suivants->pluck('id')
-                                                                           ->all() : [],
-                'precedents'         => $niveau->exists ? $niveau->precedents->pluck('code')
-                                                                             ->all() : [],
-                'est_derniere_annee' => $niveau->exists && $niveau->est_derniere_annee,
-                'can_be_deleted'     => $niveau->exists && $niveau->can_be_deleted(),
-            ],
+            'mode_vue'     => $mode_vue,
+            'titre_page'   => $titre_page,
+            'breadcrumbs'  => self::get_breadcrumbs($titre_page, $niveau->exists ? route(self::route_detail, ['cle' => $niveau->cle]) : route(self::route_detail)),
+            'item'         => self::item_to_array($niveau),
+            'consultation' => $mode_vue === RendersService::mode_consultation ? NiveauEtudeConsultationService::get($niveau) : null,
             ...NiveauEtudeService::get_selects(),
         ]);
     }
@@ -80,8 +75,39 @@ class NiveauEtudeController extends Controller {
 
 
 
+    protected static function item_to_array(NiveauEtude $niveau) : array {
+        if (!$niveau->exists) {
+            return [
+                ...$niveau->toArray(),
+                'couleur'            => null,
+                'couleur_source'     => null,
+                'suivants'           => [],
+                'precedents'         => [],
+                'est_derniere_annee' => false,
+                'can_be_deleted'     => false,
+            ];
+        }
+
+        $niveau->loadMissing(['cycle', 'filiere', 'suivants', 'precedents']);
+
+        return [
+            ...$niveau->toArray(),
+            'couleur'            => $niveau->couleur_effective,
+            'couleur_source'     => $niveau->filiere?->couleur ? "de la filière {$niveau->filiere->code}" : "du cycle {$niveau->cycle->code}",
+            'suivants'           => $niveau->suivants->modelKeys(),
+            'precedents'         => $niveau->precedents->pluck('code')
+                                                       ->all(),
+            'est_derniere_annee' => $niveau->est_derniere_annee,
+            'can_be_deleted'     => $niveau->can_be_deleted(),
+        ];
+    }
+
+
+
     protected static function get_breadcrumbs(?string $titre_detail = null, ?string $url_detail = null) : array {
-        $breadcrumbs = [['title' => "Niveaux d'études", 'href' => route(self::route_list)]];
+        $breadcrumbs = [
+            ['title' => "Niveaux d'études", 'href' => route(self::route_list)],
+        ];
 
         if ($titre_detail) {
             $breadcrumbs[] = ['title' => $titre_detail, 'href' => $url_detail];

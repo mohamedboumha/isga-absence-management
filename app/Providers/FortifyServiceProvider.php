@@ -49,7 +49,7 @@ class FortifyServiceProvider extends ServiceProvider {
 
             if (!$user->actif) {
                 throw ValidationException::withMessages([
-                                                            'email' => 'Ce compte est désactivé. Contactez le super-administrateur.',
+                                                            'email' => 'Ce compte est désactivé. Contactez-nous pour plus d’informations.',
                                                         ]);
             }
 

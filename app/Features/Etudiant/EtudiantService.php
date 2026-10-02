@@ -15,10 +15,11 @@ use App\Features\NiveauEtude\NiveauEtudeService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
+use Maatwebsite\Excel\Facades\Excel;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class EtudiantService {
     const string filtre_non_inscrit = 'aucun';
-
 
 
     //==================================================================================================================
@@ -104,6 +105,14 @@ class EtudiantService {
                         fn(Builder $query) => $query->where('cycle_id', $valeur)
                     ))
             )
+            //==========================================================================================================
+            // Export au format d'import : on exporte, on corrige dans Excel, on réimporte
+            //==========================================================================================================
+            ->export_avec(fn(Builder $query) : BinaryFileResponse => Excel::download(
+                new EtudiantImportModele($query->with('inscription_active.groupe')
+                                               ->get()),
+                'etudiants-' . now()->format('Y-m-d') . '.xlsx'
+            ))
             ->default_tri('nom_complet')
             ->row_url(fn(Etudiant $etudiant) => route('etudiant.detail', ['cle' => $etudiant->cle]))
             ->get();

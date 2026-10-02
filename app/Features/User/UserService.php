@@ -4,9 +4,9 @@ namespace App\Features\User;
 
 use App\_Core\Builders\Table\TableBuilder;
 use App\_Core\Builders\Table\TableColumn;
+use App\_Core\Services\EmailService;
 use App\_Core\Services\RendersService;
 use App\Models\User;
-use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
 
 class UserService {
@@ -108,7 +108,7 @@ class UserService {
 
 
     //==================================================================================================================
-    // Création / modification
+    // Création / modification (l'e-mail du nouveau compte est envoyé par le controller, après l'enregistrement)
     //==================================================================================================================
     public static function process_update_or_create(?string $cle, array $attributes) : User {
         $user = $cle ? self::get_or_fail($cle) : new User();
@@ -131,9 +131,7 @@ class UserService {
                              'actif'  => $attributes['actif'],
                          ]);
 
-        $nouveau_compte = !$user->exists;
-
-        if ($nouveau_compte) {
+        if (!$user->exists) {
             $user->forceFill([
                                  'password'          => Str::random(40), // provisoire : la personne choisit le sien via le lien
                                  'email_verified_at' => now(),
@@ -142,17 +140,13 @@ class UserService {
 
         $user->save();
 
-        if ($nouveau_compte) {
-            Password::sendResetLink(['email' => $user->email]);
-        }
-
         return $user;
     }
 
 
 
-    public static function envoyer_lien_mot_de_passe(User $user) : void {
-        Password::sendResetLink(['email' => $user->email]);
+    public static function envoyer_lien_mot_de_passe(User $user) : string {
+        return EmailService::envoyer_lien_mot_de_passe($user->email);
     }
 
 

@@ -9,7 +9,6 @@ use App\Features\Module\Module;
 use App\Features\User\UserService;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -80,14 +79,13 @@ class EnseignantService {
 
     //==================================================================================================================
     // Création / modification : fiche + compte + modules, dans une seule transaction
+    // (l'e-mail du nouveau compte est envoyé par le controller, après l'enregistrement)
     //==================================================================================================================
     public static function process_update_or_create(?string $cle, array $attributes) : Enseignant {
         $module_ids = $attributes['modules'] ?? [];
         unset($attributes['modules']);
 
-        $nouveau_compte = false;
-
-        $enseignant = DB::transaction(function () use ($cle, $attributes, $module_ids, &$nouveau_compte) {
+        return DB::transaction(function () use ($cle, $attributes, $module_ids) {
             //==========================================================================================================
             // Fiche enseignant
             //==========================================================================================================
@@ -113,8 +111,6 @@ class EnseignantService {
                                      'actif'             => true,
                                      'email_verified_at' => now(),
                                  ]);
-
-                $nouveau_compte = true;
             }
 
             $user->save();
@@ -131,16 +127,6 @@ class EnseignantService {
 
             return $enseignant;
         });
-
-
-        //==============================================================================================================
-        // Nouveau compte : envoi du lien "choisir mon mot de passe" (après la transaction)
-        //==============================================================================================================
-        if ($nouveau_compte) {
-            Password::sendResetLink(['email' => $enseignant->email]);
-        }
-
-        return $enseignant;
     }
 
 

@@ -1,104 +1,92 @@
+<template>
+    <Head title="Mot de passe"/>
+
+    <CarteSection titre="Changer de mot de passe"
+                  sous_titre="Choisissez un mot de passe long, que vous n'utilisez nulle part ailleurs">
+        <form class="grid gap-4" @submit.prevent="enregistrer">
+            <div class="grid gap-4 md:grid-cols-2">
+                <div class="md:col-span-2 md:max-w-[calc(50%-0.5rem)]">
+                    <ChampChaine
+                        :mode_vue="renders.mode_edit"
+                        nom_champ="current_password"
+                        type="password"
+                        label="Mot de passe actuel"
+                        autocomplete="current-password"
+                        required
+                        v-model:valeur="form.current_password"
+                        :error="form.errors.current_password"
+                    />
+                </div>
+
+                <ChampChaine
+                    :mode_vue="renders.mode_edit"
+                    nom_champ="password"
+                    type="password"
+                    label="Nouveau mot de passe"
+                    autocomplete="new-password"
+                    required
+                    v-model:valeur="form.password"
+                    :error="form.errors.password"
+                />
+
+                <ChampChaine
+                    :mode_vue="renders.mode_edit"
+                    nom_champ="password_confirmation"
+                    type="password"
+                    label="Confirmer le nouveau mot de passe"
+                    autocomplete="new-password"
+                    required
+                    v-model:valeur="form.password_confirmation"
+                    :error="form.errors.password_confirmation"
+                />
+            </div>
+
+            <div>
+                <Button type="submit" :disabled="form.processing" data-test="update-password-button">Changer le mot de
+                    passe
+                </Button>
+            </div>
+        </form>
+    </CarteSection>
+</template>
+
+
 <script setup lang="ts">
-import { Form, Head } from '@inertiajs/vue3';
-import SecurityController from '@/actions/App/Http/Controllers/Settings/SecurityController';
-import Heading from '@/components/Heading.vue';
-import InputError from '@/components/InputError.vue';
-import PasswordInput from '@/components/PasswordInput.vue';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { edit } from '@/routes/security';
+import {Head, useForm} from '@inertiajs/vue3';
+import {toast} from 'vue-sonner';
+import {Button} from '@/components/ui/button';
+import CarteSection from '@/_core/detail/carte-section.vue';
+import ChampChaine from '@/_core/renders/champ-chaine.vue';
+import {renders} from '@/_core/renders';
 
-// oxfmt-ignore
-type Props = {
-    passwordRules: string;
-} ;
+interface SecurityInterface {
+    passwordRules?: string;
+}
 
-const props = defineProps<Props>();
+const props = defineProps<SecurityInterface>();
 
 defineOptions({
     layout: {
-        breadcrumbs: [
-            {
-                title: 'Security settings',
-                href: edit(),
-            },
-        ],
+        breadcrumbs: [{title: 'Mon compte', href: '/settings/security'}],
     },
 });
+
+const form = useForm({
+    current_password: '',
+    password: '',
+    password_confirmation: '',
+});
+
+//==============================================================================================================
+// Succès : formulaire vidé + message ; erreur : les mots de passe sont vidés, pas les messages
+//==============================================================================================================
+const enregistrer = () =>
+    form.put('/settings/password', {
+        preserveScroll: true,
+        onSuccess: () => {
+            form.reset();
+            toast.success('Mot de passe changé.');
+        },
+        onError: () => form.reset('current_password', 'password', 'password_confirmation'),
+    });
 </script>
-
-<template>
-    <Head title="Security settings" />
-
-    <h1 class="sr-only">Security settings</h1>
-
-    <div class="space-y-6">
-        <Heading
-            variant="small"
-            title="Update password"
-            description="Ensure your account is using a long, random password to stay secure"
-        />
-
-        <Form
-            v-bind="SecurityController.update.form()"
-            :options="{
-                preserveScroll: true,
-            }"
-            reset-on-success
-            :reset-on-error="[
-                'password',
-                'password_confirmation',
-                'current_password',
-            ]"
-            class="space-y-6"
-            v-slot="{ errors, processing }"
-        >
-            <div class="grid gap-2">
-                <Label for="current_password">Current password</Label>
-                <PasswordInput
-                    id="current_password"
-                    name="current_password"
-                    class="mt-1 block w-full"
-                    autocomplete="current-password"
-                    placeholder="Current password"
-                />
-                <InputError :message="errors.current_password" />
-            </div>
-
-            <div class="grid gap-2">
-                <Label for="password">New password</Label>
-                <PasswordInput
-                    id="password"
-                    name="password"
-                    class="mt-1 block w-full"
-                    autocomplete="new-password"
-                    placeholder="New password"
-                    :passwordrules="props.passwordRules"
-                />
-                <InputError :message="errors.password" />
-            </div>
-
-            <div class="grid gap-2">
-                <Label for="password_confirmation">Confirm password</Label>
-                <PasswordInput
-                    id="password_confirmation"
-                    name="password_confirmation"
-                    class="mt-1 block w-full"
-                    autocomplete="new-password"
-                    placeholder="Confirm password"
-                    :passwordrules="props.passwordRules"
-                />
-                <InputError :message="errors.password_confirmation" />
-            </div>
-
-            <div class="flex items-center gap-4">
-                <Button
-                    :disabled="processing"
-                    data-test="update-password-button"
-                >
-                    Save
-                </Button>
-            </div>
-        </Form>
-    </div>
-</template>
