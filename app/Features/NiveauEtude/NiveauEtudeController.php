@@ -34,10 +34,10 @@ class NiveauEtudeController extends Controller {
 
         $niveau = $cle
             ? NiveauEtudeService::get_or_fail($cle)
-                                ->load(['cycle', 'suivants', 'precedents'])
+                                ->load(['cycle', 'filiere.cycle', 'suivants', 'precedents'])
             : new NiveauEtude(['nb_semestres' => 2, 'annee_cycle' => 1]);
 
-        $titre_page = $niveau->exists ? "{$niveau->code} — {$niveau->libelle}" : "Nouveau niveau d'études";
+        $titre_page = $niveau->exists ? $niveau->libelle : "Nouveau niveau d'études";
 
         return Inertia::render(self::page_detail, [
             'mode_vue'    => $mode_vue,
@@ -45,6 +45,8 @@ class NiveauEtudeController extends Controller {
             'breadcrumbs' => self::get_breadcrumbs($titre_page, $niveau->exists ? route(self::route_detail, ['cle' => $niveau->cle]) : route(self::route_detail)),
             'item'        => [
                 ...$niveau->toArray(),
+                'couleur'            => $niveau->exists ? $niveau->couleur_effective : null,
+                'couleur_source'     => $niveau->exists ? ($niveau->filiere ? "de la filière {$niveau->filiere->code}" : "du cycle {$niveau->cycle->nom}") : null,
                 'suivants'           => $niveau->exists ? $niveau->suivants->pluck('id')
                                                                            ->all() : [],
                 'precedents'         => $niveau->exists ? $niveau->precedents->pluck('code')

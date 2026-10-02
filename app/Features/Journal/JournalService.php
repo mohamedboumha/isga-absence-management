@@ -14,6 +14,7 @@ class JournalService {
     //==================================================================================================================
     public static bool $actif = true;
 
+
     //==================================================================================================================
     // Actions
     //==================================================================================================================
@@ -34,15 +35,15 @@ class JournalService {
     // Nom des classes => libellé affiché
     //==================================================================================================================
     const array entites = [
-        'Inscription'        => "Inscription",
         'AnneeUniversitaire' => "Année universitaire",
         'Cycle'              => "Cycle",
-        'NiveauEtude'        => "Niveau d'études",
         'Filiere'            => "Filière",
+        'NiveauEtude'        => "Niveau d'études",
         'Groupe'             => "Groupe",
         'Module'             => "Module",
         'Enseignant'         => "Enseignant",
         'Etudiant'           => "Étudiant",
+        'Inscription'        => "Inscription",
         'Seance'             => "Séance",
         'Absence'            => "Absence",
         'Justificatif'       => "Justificatif",
@@ -111,7 +112,7 @@ class JournalService {
 
 
     //==================================================================================================================
-    // Tableau de la liste (mode_list)
+    // Tableau de la liste (mode_list) : le journal est immuable, le menu "⋯" ne propose que Consulter
     //==================================================================================================================
     public static function get_table() : array {
         return TableBuilder
@@ -123,6 +124,7 @@ class JournalService {
                     ->label("Date")
                     ->nom_colonne('created_at')
                     ->render(RendersService::render_chaine)
+                    ->valeur(fn(JournalAction $journal) => $journal->created_at?->format('d/m/Y à H:i'))
                     ->triable()
             )
             ->add_column(
@@ -142,28 +144,15 @@ class JournalService {
             ->add_column(
                 TableColumn
                     ::new()
-                    ->label("Type")
-                    ->nom_colonne('entite_render')
-                    ->render(RendersService::render_chaine)
-            )
-            ->add_column(
-                TableColumn
-                    ::new()
                     ->label("Élément")
                     ->nom_colonne('entite_label')
                     ->render(RendersService::render_chaine)
-                    ->cherchable()
-            )
-            ->add_column(
-                TableColumn
-                    ::new()
-                    ->label("Recherche type")
-                    ->nom_colonne('entite')
-                    ->render(RendersService::render_chaine)
-                    ->cherchable()
+                    ->sous_texte('entite_render')
+                    ->recherche_sur(['entite_label', 'entite'])
             )
             ->default_tri('created_at', 'desc')
             ->row_url(fn(JournalAction $journal) => route('journal.detail', ['cle' => $journal->cle]))
+            ->actions_consultation_seule()
             ->get();
     }
 

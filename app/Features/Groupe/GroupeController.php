@@ -2,6 +2,7 @@
 
 namespace App\Features\Groupe;
 
+use App\_Core\Services\NotificationService;
 use App\_Core\Services\RendersService;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
@@ -40,15 +41,14 @@ class GroupeController extends Controller {
             abort(403, "Ce groupe ne peut pas être modifié.");
         }
 
-        $titre_page = $groupe->exists
-            ? "Groupe {$groupe->nom} — {$groupe->annee_universitaire->libelle}"
-            : "Nouveau groupe";
+        $titre_page = $groupe->exists ? "Groupe {$groupe->nom}" : "Nouveau groupe";
 
         return Inertia::render(self::page_detail, [
-            'mode_vue'    => $mode_vue,
-            'titre_page'  => $titre_page,
-            'breadcrumbs' => self::get_breadcrumbs($titre_page, $groupe->exists ? route(self::route_detail, ['cle' => $groupe->cle]) : route(self::route_detail)),
-            'item'        => self::item_to_array($groupe),
+            'mode_vue'     => $mode_vue,
+            'titre_page'   => $titre_page,
+            'breadcrumbs'  => self::get_breadcrumbs($titre_page, $groupe->exists ? route(self::route_detail, ['cle' => $groupe->cle]) : route(self::route_detail)),
+            'item'         => self::item_to_array($groupe),
+            'consultation' => $mode_vue === RendersService::mode_consultation ? GroupeConsultationService::get($groupe) : null,
             ...GroupeService::get_selects(),
         ]);
     }
@@ -58,6 +58,8 @@ class GroupeController extends Controller {
     public function update(GroupeRequest $request, ?string $cle = null) : RedirectResponse {
         $groupe = GroupeService::process_update_or_create($cle, $request->validated());
 
+        NotificationService::succes($cle ? "Groupe enregistré." : "Groupe créé.");
+
         return to_route(self::route_detail, ['cle' => $groupe->cle]);
     }
 
@@ -65,6 +67,8 @@ class GroupeController extends Controller {
 
     public function delete(string $cle) : RedirectResponse {
         GroupeService::process_delete($cle);
+
+        NotificationService::succes("Groupe supprimé.");
 
         return to_route(self::route_list);
     }

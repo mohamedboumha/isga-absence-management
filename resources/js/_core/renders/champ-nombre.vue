@@ -2,48 +2,43 @@
     <!--=========================================================================================================-->
     <!-- Mode list -->
     <!--=========================================================================================================-->
-    <span v-if="mode_vue === renders.mode_list" class="tabular-nums">{{
-        valeur_render
-    }}</span>
+    <span v-if="mode_vue === renders.mode_list" class="tabular-nums">{{ valeur_render }}</span>
 
     <!--=========================================================================================================-->
-    <!-- Modes detail : create, edit, consultation -->
+    <!-- Modes detail : le même champ, désactivé en consultation -->
     <!--=========================================================================================================-->
-    <div v-else class="grid gap-2">
-        <label :for="nom_champ" class="text-sm font-medium">
-            {{ label }}
-            <span v-if="required && is_editable" class="text-destructive"
-                >*</span
-            >
-        </label>
-
-        <div v-if="is_editable" class="flex items-center gap-2">
-            <Input
+    <ChampConteneur v-else :nom_champ="nom_champ" :label="label" :required="required && is_editable" :error="error">
+        <div class="relative">
+            <input
                 :id="nom_champ"
+                v-model.number="valeur"
                 :name="nom_champ"
                 type="number"
-                v-model.number="valeur"
+                inputmode="numeric"
                 :min="min"
                 :max="max"
-                :placeholder="placeholder"
+                :placeholder="is_editable ? placeholder : '—'"
+                :required="required && is_editable"
+                :disabled="!is_editable"
+                :aria-invalid="Boolean(error)"
+                class="champ tabular-nums"
+                :class="{ 'pr-12': suffixe }"
             />
-            <span v-if="suffixe" class="text-sm text-muted-foreground">{{
-                suffixe
-            }}</span>
+
+            <span v-if="suffixe"
+                  class="text-muted-foreground pointer-events-none absolute inset-y-0 right-0 flex w-12 items-center justify-center text-sm">
+                {{ suffixe }}
+            </span>
         </div>
-
-        <p v-else class="text-sm">{{ valeur_render }}</p>
-
-        <InputError :message="error" />
-    </div>
+    </ChampConteneur>
 </template>
 
+
 <script setup lang="ts">
-import { computed } from 'vue';
-import InputError from '@/components/InputError.vue';
-import { Input } from '@/components/ui/input';
-import { renders } from '@/_core/renders';
-import type { ChampProps } from './types';
+import {computed} from 'vue';
+import {renders} from '@/_core/renders';
+import ChampConteneur from './champ-conteneur.vue';
+import type {ChampProps} from './types';
 
 interface ChampNombreInterface extends ChampProps {
     min?: number;
@@ -54,11 +49,7 @@ interface ChampNombreInterface extends ChampProps {
 const props = defineProps<ChampNombreInterface>();
 const valeur = defineModel<number | null>('valeur');
 
-const is_editable = computed(
-    () =>
-        props.mode_vue === renders.mode_create ||
-        props.mode_vue === renders.mode_edit,
-);
+const is_editable = computed(() => props.mode_vue === renders.mode_create || props.mode_vue === renders.mode_edit);
 
 //==============================================================================================================
 // 30  =>  "30 h"
@@ -66,8 +57,6 @@ const is_editable = computed(
 const valeur_render = computed(() => {
     if (valeur.value === null || valeur.value === undefined) return '—';
 
-    return props.suffixe
-        ? `${valeur.value} ${props.suffixe}`
-        : String(valeur.value);
+    return props.suffixe ? `${valeur.value} ${props.suffixe}` : String(valeur.value);
 });
 </script>

@@ -4,70 +4,116 @@ namespace App\Features\Etudiant;
 
 use App\_Core\Builders\Table\TableBuilder;
 use App\_Core\Builders\Table\TableColumn;
+use App\_Core\Builders\Table\TableFilter;
 use App\_Core\Services\RendersService;
-use App\Features\Groupe\GroupeService;
-use Illuminate\Validation\ValidationException;
 use App\Features\AnneeUniversitaire\AnneeUniversitaireService;
+use App\Features\Cycle\CycleService;
 use App\Features\Groupe\Groupe;
+use App\Features\Groupe\GroupeService;
 use App\Features\Inscription\InscriptionService;
+use App\Features\NiveauEtude\NiveauEtudeService;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class EtudiantService {
+    const string filtre_non_inscrit = 'aucun';
+
+
+
     //==================================================================================================================
-    // Tableau de la liste (mode_list)
+    // Tableau de la liste (mode_list) : l'étudiant (initiales, nom, CNE) et son groupe de l'année active en badge
     //==================================================================================================================
     public static function get_table() : array {
         return TableBuilder
-            ::new(Etudiant::query()
-                          ->with(['inscription_active.groupe.niveau_etude']))
-            ->add_column(
-                TableColumn
-                    ::new()
-                    ->label("CNE")
-                    ->nom_colonne('cne')
-                    ->render(RendersService::render_chaine)
-                    ->triable()
-                    ->cherchable()
+            ::new(
+                Etudiant
+                    ::query()
+                    ->with([
+                               'inscription_active.groupe.niveau_etude.cycle',
+                               'inscription_active.groupe.niveau_etude.filiere.cycle',
+                           ])
             )
             ->add_column(
                 TableColumn
                     ::new()
-                    ->label("Nom")
-                    ->nom_colonne('nom')
-                    ->render(RendersService::render_chaine)
-                    ->triable()
-                    ->cherchable()
-            )
-            ->add_column(
-                TableColumn
-                    ::new()
-                    ->label("Prénom")
-                    ->nom_colonne('prenom')
-                    ->render(RendersService::render_chaine)
-                    ->triable()
-                    ->cherchable()
+                    ->label("Étudiant")
+                    ->nom_colonne('nom_complet')
+                    ->render(RendersService::render_personne)
+                    ->sous_texte('cne')
+                    ->tri_sur('nom')
+                    ->recherche_sur(['nom', 'prenom', 'cne'])
             )
             ->add_column(
                 TableColumn
                     ::new()
                     ->label("Groupe (année active)")
                     ->nom_colonne('inscription_active.groupe.nom')
-                    ->render(RendersService::render_chaine)
+                    ->render(RendersService::render_badge)
+                    ->couleur('inscription_active.groupe.niveau_etude.couleur_effective')
+                    ->sous_texte('inscription_active.groupe.niveau_etude.libelle')
             )
             ->add_column(
                 TableColumn
                     ::new()
-                    ->label("Niveau")
-                    ->nom_colonne('inscription_active.groupe.niveau_etude.code')
+                    ->label("E-mail")
+                    ->nom_colonne('email')
+                    ->render(RendersService::render_chaine)
+                    ->triable()
+                    ->cherchable()
+            )
+            ->add_column(
+                TableColumn
+                    ::new()
+                    ->label("Téléphone")
+                    ->nom_colonne('telephone')
                     ->render(RendersService::render_chaine)
             )
-            ->default_tri('nom')
+            //==========================================================================================================
+            // Filtres : tous portent sur l'inscription de l'année active
+            //==========================================================================================================
+            ->add_filtre(
+                TableFilter
+                    ::new('groupe')
+                    ->label("Groupe")
+                    ->select([
+                                 ['valeur' => self::filtre_non_inscrit, 'label' => "Non inscrit cette année"],
+                                 ...GroupeService::get_groupes_annee_active_pour_select(),
+                             ])
+                    ->appliquer(fn(Builder $query, string $valeur) => $valeur === self::filtre_non_inscrit
+                        ? $query->whereDoesntHave('inscription_active')
+                        : $query->whereHas('inscription_active', fn(Builder $query) => $query->where('groupe_id', $valeur)))
+            )
+            ->add_filtre(
+                TableFilter
+                    ::new('niveau')
+                    ->label("Niveau d'études")
+                    ->select(NiveauEtudeService::get_niveaux_pour_select())
+                    ->appliquer(fn(Builder $query, string $valeur) => $query->whereHas(
+                        'inscription_active.groupe',
+                        fn(Builder $query) => $query->where('niveau_etude_id', $valeur)
+                    ))
+            )
+            ->add_filtre(
+                TableFilter
+                    ::new('cycle')
+                    ->label("Cycle")
+                    ->select(CycleService::get_cycles_pour_select())
+                    ->appliquer(fn(Builder $query, string $valeur) => $query->whereHas(
+                        'inscription_active.groupe.niveau_etude',
+                        fn(Builder $query) => $query->where('cycle_id', $valeur)
+                    ))
+            )
+            ->default_tri('nom_complet')
             ->row_url(fn(Etudiant $etudiant) => route('etudiant.detail', ['cle' => $etudiant->cle]))
             ->get();
     }
 
 
 
+    //==================================================================================================================
+    // Groupes de l'année active, avec une option "non inscrit"
+    //==================================================================================================================
     public static function get_selects() : array {
         return [
             'groupes' => [
@@ -79,6 +125,9 @@ class EtudiantService {
 
 
 
+    //==================================================================================================================
+    // Étudiant + inscription de l'année active, dans une seule transaction
+    //==================================================================================================================
     public static function process_update_or_create(?string $cle, array $attributes) : Etudiant {
         $groupe_id = $attributes['groupe_id'] ?? null;
         unset($attributes['groupe_id']);

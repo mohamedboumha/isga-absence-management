@@ -2,6 +2,7 @@
 
 namespace App\Features\Cycle;
 
+use App\_Core\Services\CouleurService;
 use App\Features\NiveauEtude\NiveauEtude;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -16,8 +17,9 @@ class CycleRequest extends FormRequest {
 
     protected function prepareForValidation() : void {
         $this->merge([
-                         'code' => strtoupper(trim((string) $this->input('code'))),
-                         'nom'  => trim((string) $this->input('nom')),
+                         'code'    => strtoupper(trim((string) $this->input('code'))),
+                         'nom'     => trim((string) $this->input('nom')),
+                         'couleur' => strtoupper((string) $this->input('couleur')),
                      ]);
     }
 
@@ -32,6 +34,7 @@ class CycleRequest extends FormRequest {
             'nom'       => ['required', 'max:100', Rule::unique('cycles', 'nom')
                                                        ->ignore($cle, 'cle')],
             'nb_annees' => ['required', 'integer', 'min:1', 'max:8'],
+            'couleur'   => ['required', Rule::in(CouleurService::get_valeurs())],
         ];
     }
 
@@ -74,6 +77,8 @@ class CycleRequest extends FormRequest {
             'nb_annees.required' => "La durée est obligatoire.",
             'nb_annees.min'      => "Un cycle dure au moins 1 an.",
             'nb_annees.max'      => "Un cycle ne peut pas dépasser 8 ans.",
+            'couleur.required'   => "La couleur est obligatoire.",
+            'couleur.in'         => "Choisissez une couleur de la palette.",
         ];
     }
 }

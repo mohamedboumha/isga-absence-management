@@ -2,6 +2,7 @@
 
 namespace App\Features\Justificatif;
 
+use App\_Core\Services\NotificationService;
 use App\_Core\Services\RendersService;
 use App\Features\Absence\Absence;
 use App\Http\Controllers\Controller;
@@ -11,7 +12,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
-use App\_Core\Services\NotificationService;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class JustificatifController extends Controller {
@@ -74,6 +74,8 @@ class JustificatifController extends Controller {
 
         $justificatif = JustificatifService::process_update_or_create($cle, $request->validated(), $request->file('fichier'));
 
+        NotificationService::succes($cle ? "Justificatif enregistré." : "Justificatif ajouté.");
+
         return to_route(self::route_detail, ['cle' => $justificatif->cle]);
     }
 
@@ -112,25 +114,25 @@ class JustificatifController extends Controller {
 
     //==================================================================================================================
     // Le document n'est accessible que par cette route (connexion + rôle vérifiés)
+    // ?telecharger=1 : téléchargement ; sinon : affichage dans la visionneuse
     //==================================================================================================================
-    public function fichier(string $cle) : StreamedResponse {
+    public function fichier(Request $request, string $cle) : StreamedResponse {
         $justificatif = JustificatifService::get_or_fail($cle);
+        $disque       = Storage::disk(JustificatifService::disque);
 
-        abort_if(
-            !$justificatif->fichier_chemin || !Storage::disk(JustificatifService::disque)
-                                                      ->exists($justificatif->fichier_chemin),
-            404,
-            "Document introuvable"
-        );
+        abort_if(!$justificatif->fichier_chemin || !$disque->exists($justificatif->fichier_chemin), 404, "Document introuvable");
 
-        return Storage::disk(JustificatifService::disque)
-                      ->response($justificatif->fichier_chemin, $justificatif->fichier_nom);
+        return $request->boolean('telecharger')
+            ? $disque->download($justificatif->fichier_chemin, $justificatif->fichier_nom)
+            : $disque->response($justificatif->fichier_chemin, $justificatif->fichier_nom);
     }
 
 
 
     public function delete(string $cle) : RedirectResponse {
         JustificatifService::process_delete($cle);
+
+        NotificationService::succes("Justificatif supprimé.");
 
         return to_route(self::route_list);
     }

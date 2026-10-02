@@ -11,43 +11,64 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class NiveauEtudeService {
+    //==================================================================================================================
+    // Tableau de la liste (mode_list) : le code en badge (couleur de la filière ou du cycle), le libellé dessous
+    //==================================================================================================================
     public static function get_table() : array {
         return TableBuilder
-            ::new(NiveauEtude::query()
-                             ->with(['cycle', 'filiere', 'suivants']))
-            ->add_column(TableColumn::new()
-                                    ->label("Code")
-                                    ->nom_colonne('code')
-                                    ->render(RendersService::render_chaine)
-                                    ->triable()
-                                    ->cherchable())
-            ->add_column(TableColumn::new()
-                                    ->label("Libellé")
-                                    ->nom_colonne('libelle')
-                                    ->render(RendersService::render_chaine)
-                                    ->triable()
-                                    ->cherchable())
-            ->add_column(TableColumn::new()
-                                    ->label("Cycle")
-                                    ->nom_colonne('cycle.nom')
-                                    ->render(RendersService::render_chaine))
-            ->add_column(TableColumn::new()
-                                    ->label("Année")
-                                    ->nom_colonne('annee_cycle')
-                                    ->render(RendersService::render_nombre)
-                                    ->triable())
-            ->add_column(TableColumn::new()
-                                    ->label("Filière")
-                                    ->nom_colonne('filiere.code')
-                                    ->render(RendersService::render_chaine))
-            ->add_column(TableColumn::new()
-                                    ->label("Semestres")
-                                    ->nom_colonne('nb_semestres')
-                                    ->render(RendersService::render_nombre))
-            ->add_column(TableColumn::new()
-                                    ->label("Année suivante")
-                                    ->nom_colonne('suivants_render')
-                                    ->render(RendersService::render_chaine))
+            ::new(
+                NiveauEtude
+                    ::query()
+                    ->with(['cycle', 'filiere.cycle', 'suivants'])
+                    ->withCount('groupes')
+            )
+            ->add_column(
+                TableColumn
+                    ::new()
+                    ->label("Niveau")
+                    ->nom_colonne('code')
+                    ->render(RendersService::render_badge)
+                    ->couleur('couleur_effective')
+                    ->sous_texte('libelle')
+                    ->triable()
+                    ->recherche_sur(['code', 'libelle'])
+            )
+            ->add_column(
+                TableColumn
+                    ::new()
+                    ->label("Cycle")
+                    ->nom_colonne('cycle.nom')
+                    ->render(RendersService::render_chaine)
+            )
+            ->add_column(
+                TableColumn
+                    ::new()
+                    ->label("Année du cycle")
+                    ->nom_colonne('annee_cycle')
+                    ->render(RendersService::render_nombre)
+                    ->triable()
+            )
+            ->add_column(
+                TableColumn
+                    ::new()
+                    ->label("Semestres")
+                    ->nom_colonne('nb_semestres')
+                    ->render(RendersService::render_nombre)
+            )
+            ->add_column(
+                TableColumn
+                    ::new()
+                    ->label("Année suivante")
+                    ->nom_colonne('suivants_render')
+                    ->render(RendersService::render_chaine)
+            )
+            ->add_column(
+                TableColumn
+                    ::new()
+                    ->label("Groupes")
+                    ->nom_colonne('groupes_count')
+                    ->render(RendersService::render_nombre)
+            )
             ->default_tri('code')
             ->row_url(fn(NiveauEtude $niveau) => route('niveau-etude.detail', ['cle' => $niveau->cle]))
             ->get();
@@ -84,6 +105,24 @@ class NiveauEtudeService {
             ->orderBy('code')
             ->get()
             ->map(fn(NiveauEtude $niveau) => ['valeur' => $niveau->id, 'label' => "{$niveau->code} — {$niveau->libelle}"])
+            ->all();
+    }
+
+
+
+    //==================================================================================================================
+    // Pour le select des modules ; le nombre de semestres accompagne chaque niveau
+    //==================================================================================================================
+    public static function get_niveaux_avec_semestres_pour_select() : array {
+        return NiveauEtude
+            ::query()
+            ->orderBy('code')
+            ->get()
+            ->map(fn(NiveauEtude $niveau) => [
+                'valeur'       => $niveau->id,
+                'label'        => "{$niveau->code} — {$niveau->libelle}",
+                'nb_semestres' => $niveau->nb_semestres,
+            ])
             ->all();
     }
 
@@ -131,21 +170,5 @@ class NiveauEtudeService {
         abort_if(!$niveau, 404, "Niveau d'études introuvable");
 
         return $niveau;
-    }
-
-    //==================================================================================================================
-    // Pour le select des groupes et des modules ; le nombre de semestres accompagne chaque niveau
-    //==================================================================================================================
-    public static function get_niveaux_avec_semestres_pour_select() : array {
-        return NiveauEtude
-            ::query()
-            ->orderBy('code')
-            ->get()
-            ->map(fn(NiveauEtude $niveau) => [
-                'valeur'       => $niveau->id,
-                'label'        => "{$niveau->code} — {$niveau->libelle}",
-                'nb_semestres' => $niveau->nb_semestres,
-            ])
-            ->all();
     }
 }

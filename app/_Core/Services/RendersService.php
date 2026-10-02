@@ -11,13 +11,17 @@ class RendersService {
     const string mode_edit         = 'edit';
     const string mode_consultation = 'consultation';
 
+
     //==================================================================================================================
-    // Types de render
+    // Types de render (= composants Vue dans resources/js/_core/renders et resources/js/_core/table)
     //==================================================================================================================
-    const string render_chaine  = 'chaine';
-    const string render_date    = 'date';
-    const string render_boolean = 'boolean';
-    const string render_nombre  = 'nombre';
+    const string render_chaine   = 'chaine';
+    const string render_date     = 'date';
+    const string render_boolean  = 'boolean';
+    const string render_nombre   = 'nombre';
+    const string render_badge    = 'badge';      // badge à la couleur enregistrée en base
+    const string render_statut   = 'statut';     // pastille de statut (clés de statuts.ts)
+    const string render_personne = 'personne';   // initiales + nom + seconde ligne
 
 
 

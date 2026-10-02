@@ -9,6 +9,7 @@ use App\Features\Seance\SeanceService;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Barryvdh\DomPDF\PDF as DomPdf;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
@@ -17,10 +18,11 @@ class ExportController extends Controller {
         $etudiant = EtudiantService::get_or_fail($cle);
         $periode  = self::get_periode($request);
 
-        return Pdf
+        $pdf = Pdf
             ::loadView('pdf.releve-etudiant', ExportService::get_releve_etudiant($etudiant, $periode))
-            ->setPaper('a4')
-            ->stream("releve-absences-{$etudiant->cne}.pdf");
+            ->setPaper('a4');
+
+        return self::envoyer($request, $pdf, "releve-absences-{$etudiant->cne}.pdf");
     }
 
 
@@ -29,10 +31,11 @@ class ExportController extends Controller {
         $groupe  = GroupeService::get_or_fail($cle);
         $periode = self::get_periode($request);
 
-        return Pdf
+        $pdf = Pdf
             ::loadView('pdf.rapport-groupe', ExportService::get_rapport_groupe($groupe, $periode))
-            ->setPaper('a4')
-            ->stream("rapport-absences-{$groupe->nom}.pdf");
+            ->setPaper('a4');
+
+        return self::envoyer($request, $pdf, "rapport-absences-{$groupe->nom}.pdf");
     }
 
 
@@ -47,10 +50,22 @@ class ExportController extends Controller {
         //==============================================================================================================
         abort_if(!AppelService::can_voir($user, $seance), 403, "Vous n'avez pas accès à cette séance.");
 
-        return Pdf
+        $pdf = Pdf
             ::loadView('pdf.feuille-presence', ExportService::get_feuille_presence($seance))
-            ->setPaper('a4')
-            ->stream("feuille-presence-{$seance->groupe->nom}-{$seance->date?->format('Y-m-d')}.pdf");
+            ->setPaper('a4');
+
+        return self::envoyer($request, $pdf, "feuille-presence-{$seance->groupe->nom}-{$seance->date?->format('Y-m-d')}.pdf");
+    }
+
+
+
+    //==================================================================================================================
+    // ?telecharger=1 : téléchargement ; sinon : affichage (visionneuse, onglet)
+    //==================================================================================================================
+    protected static function envoyer(Request $request, DomPdf $pdf, string $nom_fichier) : Response {
+        return $request->boolean('telecharger')
+            ? $pdf->download($nom_fichier)
+            : $pdf->stream($nom_fichier);
     }
 
 

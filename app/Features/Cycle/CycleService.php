@@ -8,35 +8,54 @@ use App\_Core\Services\RendersService;
 use Illuminate\Validation\ValidationException;
 
 class CycleService {
+    //==================================================================================================================
+    // Tableau de la liste (mode_list) : le code en badge, à la couleur du cycle
+    //==================================================================================================================
     public static function get_table() : array {
         return TableBuilder
             ::new(Cycle::query()
                        ->withCount(['filieres', 'niveaux']))
-            ->add_column(TableColumn::new()
-                                    ->label("Code")
-                                    ->nom_colonne('code')
-                                    ->render(RendersService::render_chaine)
-                                    ->triable()
-                                    ->cherchable())
-            ->add_column(TableColumn::new()
-                                    ->label("Nom")
-                                    ->nom_colonne('nom')
-                                    ->render(RendersService::render_chaine)
-                                    ->triable()
-                                    ->cherchable())
-            ->add_column(TableColumn::new()
-                                    ->label("Durée (années)")
-                                    ->nom_colonne('nb_annees')
-                                    ->render(RendersService::render_nombre)
-                                    ->triable())
-            ->add_column(TableColumn::new()
-                                    ->label("Filières")
-                                    ->nom_colonne('filieres_count')
-                                    ->render(RendersService::render_nombre))
-            ->add_column(TableColumn::new()
-                                    ->label("Niveaux")
-                                    ->nom_colonne('niveaux_count')
-                                    ->render(RendersService::render_nombre))
+            ->add_column(
+                TableColumn
+                    ::new()
+                    ->label("Code")
+                    ->nom_colonne('code')
+                    ->render(RendersService::render_badge)
+                    ->couleur('couleur')
+                    ->triable()
+                    ->cherchable()
+            )
+            ->add_column(
+                TableColumn
+                    ::new()
+                    ->label("Nom")
+                    ->nom_colonne('nom')
+                    ->render(RendersService::render_chaine)
+                    ->triable()
+                    ->cherchable()
+            )
+            ->add_column(
+                TableColumn
+                    ::new()
+                    ->label("Durée (années)")
+                    ->nom_colonne('nb_annees')
+                    ->render(RendersService::render_nombre)
+                    ->triable()
+            )
+            ->add_column(
+                TableColumn
+                    ::new()
+                    ->label("Filières")
+                    ->nom_colonne('filieres_count')
+                    ->render(RendersService::render_nombre)
+            )
+            ->add_column(
+                TableColumn
+                    ::new()
+                    ->label("Niveaux")
+                    ->nom_colonne('niveaux_count')
+                    ->render(RendersService::render_nombre)
+            )
             ->default_tri('nom')
             ->row_url(fn(Cycle $cycle) => route('cycle.detail', ['cle' => $cycle->cle]))
             ->get();
@@ -45,7 +64,7 @@ class CycleService {
 
 
     //==================================================================================================================
-    // Pour les selects : la durée accompagne chaque cycle (utile pour limiter l'année d'un niveau)
+    // Pour les selects : la durée et la couleur accompagnent chaque cycle
     //==================================================================================================================
     public static function get_cycles_pour_select() : array {
         return Cycle
@@ -56,6 +75,7 @@ class CycleService {
                 'valeur'    => $cycle->id,
                 'label'     => "{$cycle->nom} ({$cycle->nb_annees} an" . ($cycle->nb_annees > 1 ? 's' : '') . ")",
                 'nb_annees' => $cycle->nb_annees,
+                'couleur'   => $cycle->couleur,
             ])
             ->all();
     }

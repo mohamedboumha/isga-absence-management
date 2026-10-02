@@ -35,9 +35,8 @@ class UserService {
     ];
 
 
-
     //==================================================================================================================
-    // Tableau de la liste (mode_list)
+    // Tableau de la liste (mode_list) : la personne (initiales, nom, e-mail), son rôle, l'état du compte
     //==================================================================================================================
     public static function get_table() : array {
         return TableBuilder
@@ -45,29 +44,13 @@ class UserService {
             ->add_column(
                 TableColumn
                     ::new()
-                    ->label("Nom")
-                    ->nom_colonne('name')
-                    ->render(RendersService::render_chaine)
-                    ->triable()
-                    ->cherchable()
-            )
-            ->add_column(
-                TableColumn
-                    ::new()
-                    ->label("Prénom")
-                    ->nom_colonne('prenom')
-                    ->render(RendersService::render_chaine)
-                    ->triable()
-                    ->cherchable()
-            )
-            ->add_column(
-                TableColumn
-                    ::new()
-                    ->label("E-mail")
-                    ->nom_colonne('email')
-                    ->render(RendersService::render_chaine)
-                    ->triable()
-                    ->cherchable()
+                    ->label("Utilisateur")
+                    ->nom_colonne('nom_complet')
+                    ->render(RendersService::render_personne)
+                    ->valeur(fn(User $user) => trim("{$user->prenom} " . mb_strtoupper((string) $user->name)))
+                    ->sous_texte('email')
+                    ->tri_sur('name')
+                    ->recherche_sur(['name', 'prenom', 'email'])
             )
             ->add_column(
                 TableColumn
@@ -75,16 +58,18 @@ class UserService {
                     ->label("Rôle")
                     ->nom_colonne('role_render')
                     ->render(RendersService::render_chaine)
+                    ->tri_sur('role')
             )
             ->add_column(
                 TableColumn
                     ::new()
-                    ->label("Actif")
-                    ->nom_colonne('actif')
-                    ->render(RendersService::render_boolean)
-                    ->triable()
+                    ->label("Compte")
+                    ->nom_colonne('compte')
+                    ->render(RendersService::render_statut)
+                    ->valeur(fn(User $user) => $user->actif ? 'actif' : 'desactive')
+                    ->tri_sur('actif')
             )
-            ->default_tri('name')
+            ->default_tri('nom_complet')
             ->row_url(fn(User $user) => route('utilisateur.detail', ['cle' => $user->cle]))
             ->get();
     }
@@ -132,7 +117,8 @@ class UserService {
         // Compte enseignant : seul "actif" se modifie ici (le reste suit la fiche enseignant)
         //==============================================================================================================
         if ($user->exists && self::is_enseignant($user)) {
-            $user->forceFill(['actif' => $attributes['actif']])->save();
+            $user->forceFill(['actif' => $attributes['actif']])
+                 ->save();
 
             return $user;
         }
@@ -172,7 +158,9 @@ class UserService {
 
 
     public static function get_or_fail(string $cle) : User {
-        $user = User::query()->where('cle', $cle)->first();
+        $user = User::query()
+                    ->where('cle', $cle)
+                    ->first();
 
         abort_if(!$user, 404, "Utilisateur introuvable");
 

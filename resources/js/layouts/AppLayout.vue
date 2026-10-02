@@ -1,11 +1,22 @@
-<script setup lang="ts">
-import { computed } from 'vue';
-import { usePage } from '@inertiajs/vue3';
-import AppLayout from '@/layouts/app/AppSidebarLayout.vue';
-import type { BreadcrumbItem } from '@/types';
-import ConfirmationDialog from '@/_core/dialogs/confirmation-dialog.vue';
+<template>
+    <AppLayout :breadcrumbs="breadcrumbs_affiches">
+        <slot/>
 
-const { breadcrumbs = [] } = defineProps<{
+        <ConfirmationDialog/>
+        <VisionneuseDocument/>
+    </AppLayout>
+</template>
+
+
+<script setup lang="ts">
+import {computed} from 'vue';
+import {usePage} from '@inertiajs/vue3';
+import ConfirmationDialog from '@/_core/dialogs/confirmation-dialog.vue';
+import VisionneuseDocument from '@/_core/documents/visionneuse-document.vue';
+import AppLayout from '@/layouts/app/AppSidebarLayout.vue';
+import type {BreadcrumbItem} from '@/types';
+
+const {breadcrumbs = []} = defineProps<{
     breadcrumbs?: BreadcrumbItem[];
 }>();
 
@@ -15,16 +26,6 @@ const { breadcrumbs = [] } = defineProps<{
 const page = usePage();
 
 const breadcrumbs_affiches = computed(() =>
-    breadcrumbs.length
-        ? breadcrumbs
-        : ((page.props.breadcrumbs as BreadcrumbItem[] | undefined) ?? []),
+    breadcrumbs.length ? breadcrumbs : ((page.props.breadcrumbs as BreadcrumbItem[] | undefined) ?? []),
 );
 </script>
-
-<template>
-    <AppLayout :breadcrumbs="breadcrumbs_affiches">
-        <slot />
-        <ConfirmationDialog />
-        <Toaster rich-colors position="top-right" />
-    </AppLayout>
-</template>

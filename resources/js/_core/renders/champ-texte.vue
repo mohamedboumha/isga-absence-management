@@ -2,42 +2,32 @@
     <!--=========================================================================================================-->
     <!-- Mode list : texte tronqué -->
     <!--=========================================================================================================-->
-    <span v-if="mode_vue === renders.mode_list" class="line-clamp-1">{{
-        valeur
-    }}</span>
+    <span v-if="mode_vue === renders.mode_list" class="line-clamp-1">{{ valeur || '—' }}</span>
 
     <!--=========================================================================================================-->
-    <!-- Modes detail : create, edit, consultation -->
+    <!-- Modes detail : la même zone de texte, désactivée en consultation -->
     <!--=========================================================================================================-->
-    <div v-else class="grid gap-2">
-        <label :for="nom_champ" class="text-sm font-medium">
-            {{ label }}
-            <span v-if="required && is_editable" class="text-destructive"
-                >*</span
-            >
-        </label>
-
+    <ChampConteneur v-else :nom_champ="nom_champ" :label="label" :required="required && is_editable" :error="error">
         <textarea
-            v-if="is_editable"
             :id="nom_champ"
-            :name="nom_champ"
             v-model="valeur"
-            :placeholder="placeholder"
+            :name="nom_champ"
             :rows="rows"
-            class="rounded-md border border-input bg-background px-3 py-2 text-sm"
+            :placeholder="is_editable ? placeholder : '—'"
+            :required="required && is_editable"
+            :disabled="!is_editable"
+            :aria-invalid="Boolean(error)"
+            class="champ"
         />
-
-        <p v-else class="text-sm whitespace-pre-line">{{ valeur || '—' }}</p>
-
-        <InputError :message="error" />
-    </div>
+    </ChampConteneur>
 </template>
 
+
 <script setup lang="ts">
-import { computed } from 'vue';
-import InputError from '@/components/InputError.vue';
-import { renders } from '@/_core/renders';
-import type { ChampProps } from './types';
+import {computed} from 'vue';
+import {renders} from '@/_core/renders';
+import ChampConteneur from './champ-conteneur.vue';
+import type {ChampProps} from './types';
 
 interface ChampTexteInterface extends ChampProps {
     rows?: number;
@@ -49,9 +39,5 @@ const props = withDefaults(defineProps<ChampTexteInterface>(), {
 
 const valeur = defineModel<string | null>('valeur');
 
-const is_editable = computed(
-    () =>
-        props.mode_vue === renders.mode_create ||
-        props.mode_vue === renders.mode_edit,
-);
+const is_editable = computed(() => props.mode_vue === renders.mode_create || props.mode_vue === renders.mode_edit);
 </script>

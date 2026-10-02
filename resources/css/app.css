@@ -8,10 +8,9 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-    --font-sans:
-        'Schibsted Grotesk', ui-sans-serif, system-ui, sans-serif,
-        'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
-        'Noto Color Emoji';
+    --font-sans: 'Schibsted Grotesk', ui-sans-serif, system-ui, sans-serif,
+    'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
+    'Noto Color Emoji';
 
     --radius-lg: var(--radius);
     --radius-md: calc(var(--radius) - 2px);
@@ -66,6 +65,7 @@
     --color-justifie: var(--justifie);
     --color-isga-rouge: var(--isga-rouge);
     --color-isga-gris: var(--isga-gris);
+    --color-champ: var(--champ-fond);
 }
 
 /*
@@ -89,115 +89,140 @@
 @layer utilities {
     body,
     html {
-        --font-sans:
-            'Schibsted Grotesk', ui-sans-serif, system-ui, sans-serif,
-            'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
-            'Noto Color Emoji';
+        --font-sans: 'Schibsted Grotesk', ui-sans-serif, system-ui, sans-serif,
+        'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
+        'Noto Color Emoji';
     }
 }
 
 :root {
     /* Identité ISGA (couleurs exactes du logo) */
-    --isga-rouge: #d91d36;
-    --isga-gris: #5e5e5d;
+    --isga-rouge: #D91D36;
+    --isga-gris: #5E5E5D;
 
     /* Statuts : la couleur porte un sens, jamais de la décoration */
-    --present: #0f7b6c;
-    --absent: #d91d36;
-    --attente: #b7791f;
-    --justifie: #3f5aa6;
+    --present: #0F7B6C;
+    --absent: #D91D36;
+    --attente: #B7791F;
+    --justifie: #3F5AA6;
 
-    /* Feuille blanche posée sur le papier */
-    --background: #ffffff;
-    --foreground: #2f2f2e;
-    --card: #ffffff;
-    --card-foreground: #2f2f2e;
-    --popover: #ffffff;
-    --popover-foreground: #2f2f2e;
+    /* Champs de saisie : dérivés du gris ISGA ; le bord est le même dans tous les modes */
+    --champ-bord: #D4D4D2;
+    --champ-bord-focus: #7E7E7D;
+    --champ-fond: #ECECEB;
+    --champ-fond-focus: #E4E4E3;
+    --champ-texte: #5E5E5D;
+    --champ-texte-focus: #2F2F2E;
+    --champ-placeholder: #9C9C9A;
 
-    /* Actions principales en graphite ; le rouge est réservé aux absences et aux suppressions */
-    --primary: #2f2f2e;
-    --primary-foreground: #ffffff;
-    --secondary: #efefed;
-    --secondary-foreground: #2f2f2e;
-    --muted: #f3f3f1;
-    --muted-foreground: #5e5e5d;
-    --accent: #efefed;
-    --accent-foreground: #2f2f2e;
-    --destructive: #d91d36;
-    --destructive-foreground: #ffffff;
+    /* Consultation : seuls le fond et le texte changent */
+    --champ-desactive-fond: #F8F8F7;
+    --champ-desactive-texte: #6E6E6D;
+    --champ-desactive-coche: #B5B5B3;
+
+    /* Page en gris ISGA clair ; tableaux, fenêtres et menus en blanc, posés dessus */
+    --background: #F4F4F3;
+    --foreground: #2F2F2E;
+    --card: #FFFFFF;
+    --card-foreground: #2F2F2E;
+    --popover: #FFFFFF;
+    --popover-foreground: #2F2F2E;
+
+    /* Couleur principale : le gris ISGA des champs ; le rouge reste réservé aux absences et suppressions */
+    --primary: #5E5E5D;
+    --primary-foreground: #FFFFFF;
+    --secondary: #E7E7E5;
+    --secondary-foreground: #2F2F2E;
+    --muted: #EDEDEB;
+    --muted-foreground: #5E5E5D;
+    --accent: #E7E7E5;
+    --accent-foreground: #2F2F2E;
+    --destructive: #D91D36;
+    --destructive-foreground: #FFFFFF;
 
     /* Réglure */
-    --border: #e3e3e0;
-    --input: #d6d6d2;
-    --ring: #5e5e5d;
+    --border: #DEDEDB;
+    --input: #D0D0CD;
+    --ring: #5E5E5D;
 
-    --chart-1: #2f2f2e;
-    --chart-2: #0f7b6c;
-    --chart-3: #3f5aa6;
-    --chart-4: #b7791f;
-    --chart-5: #d91d36;
+    --chart-1: #5E5E5D;
+    --chart-2: #0F7B6C;
+    --chart-3: #3F5AA6;
+    --chart-4: #B7791F;
+    --chart-5: #D91D36;
 
     --radius: 0.375rem;
 
-    /* Papier : barre latérale et marges */
-    --sidebar-background: #f6f6f5;
-    --sidebar: #f6f6f5;
-    --sidebar-foreground: #2f2f2e;
-    --sidebar-primary: #2f2f2e;
-    --sidebar-primary-foreground: #ffffff;
-    --sidebar-accent: #ffffff;
-    --sidebar-accent-foreground: #2f2f2e;
-    --sidebar-border: #e3e3e0;
-    --sidebar-ring: #5e5e5d;
+    /* Barre latérale à la couleur des champs */
+    --sidebar-background: #ECECEB;
+    --sidebar: #ECECEB;
+    --sidebar-foreground: #2F2F2E;
+    --sidebar-primary: #5E5E5D;
+    --sidebar-primary-foreground: #FFFFFF;
+    --sidebar-accent: #FFFFFF;
+    --sidebar-accent-foreground: #2F2F2E;
+    --sidebar-border: #DEDEDB;
+    --sidebar-ring: #5E5E5D;
 }
 
 .dark {
-    --isga-rouge: #f0445b;
-    --isga-gris: #a3a3a0;
+    --isga-rouge: #F0445B;
+    --isga-gris: #A3A3A0;
 
-    --present: #34b39d;
-    --absent: #f0445b;
-    --attente: #e0a33a;
-    --justifie: #8196db;
+    --present: #34B39D;
+    --absent: #F0445B;
+    --attente: #E0A33A;
+    --justifie: #8196DB;
 
-    --background: #1c1c1b;
-    --foreground: #ededeb;
-    --card: #1c1c1b;
-    --card-foreground: #ededeb;
-    --popover: #232322;
-    --popover-foreground: #ededeb;
+    --champ-bord: #3D3D3B;
+    --champ-bord-focus: #8A8A87;
+    --champ-fond: #2A2A29;
+    --champ-fond-focus: #323231;
+    --champ-texte: #C9C9C6;
+    --champ-texte-focus: #EDEDEB;
+    --champ-placeholder: #7A7A78;
 
-    --primary: #ededeb;
-    --primary-foreground: #1c1c1b;
-    --secondary: #2a2a29;
-    --secondary-foreground: #ededeb;
-    --muted: #262625;
-    --muted-foreground: #a3a3a0;
-    --accent: #2a2a29;
-    --accent-foreground: #ededeb;
-    --destructive: #f0445b;
-    --destructive-foreground: #ffffff;
+    --champ-desactive-fond: #20201F;
+    --champ-desactive-texte: #9C9C99;
+    --champ-desactive-coche: #5A5A58;
 
-    --border: #333331;
-    --input: #3a3a38;
-    --ring: #a3a3a0;
+    --background: #1C1C1B;
+    --foreground: #EDEDEB;
+    --card: #242423;
+    --card-foreground: #EDEDEB;
+    --popover: #2A2A29;
+    --popover-foreground: #EDEDEB;
 
-    --chart-1: #ededeb;
-    --chart-2: #34b39d;
-    --chart-3: #8196db;
-    --chart-4: #e0a33a;
-    --chart-5: #f0445b;
+    --primary: #C9C9C6;
+    --primary-foreground: #1C1C1B;
+    --secondary: #2A2A29;
+    --secondary-foreground: #EDEDEB;
+    --muted: #2A2A29;
+    --muted-foreground: #A3A3A0;
+    --accent: #2A2A29;
+    --accent-foreground: #EDEDEB;
+    --destructive: #F0445B;
+    --destructive-foreground: #FFFFFF;
 
-    --sidebar-background: #141413;
-    --sidebar: #141413;
-    --sidebar-foreground: #ededeb;
-    --sidebar-primary: #ededeb;
-    --sidebar-primary-foreground: #1c1c1b;
-    --sidebar-accent: #232322;
-    --sidebar-accent-foreground: #ededeb;
-    --sidebar-border: #333331;
-    --sidebar-ring: #a3a3a0;
+    --border: #363634;
+    --input: #3D3D3B;
+    --ring: #A3A3A0;
+
+    --chart-1: #C9C9C6;
+    --chart-2: #34B39D;
+    --chart-3: #8196DB;
+    --chart-4: #E0A33A;
+    --chart-5: #F0445B;
+
+    --sidebar-background: #151514;
+    --sidebar: #151514;
+    --sidebar-foreground: #EDEDEB;
+    --sidebar-primary: #C9C9C6;
+    --sidebar-primary-foreground: #1C1C1B;
+    --sidebar-accent: #2A2A29;
+    --sidebar-accent-foreground: #EDEDEB;
+    --sidebar-border: #363634;
+    --sidebar-ring: #A3A3A0;
 }
 
 @layer base {
@@ -207,5 +232,205 @@
 
     body {
         @apply bg-background text-foreground;
+    }
+}
+
+/*==============================================================================================================*/
+/* Fenêtres (dialogues) : ouverture rapide (120 ms), fermeture encore plus rapide (90 ms)                        */
+/*==============================================================================================================*/
+[data-slot='dialog-overlay'],
+[data-slot='dialog-content'] {
+    animation-duration: 120ms !important;
+    animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+[data-slot='dialog-overlay'][data-state='closed'],
+[data-slot='dialog-content'][data-state='closed'] {
+    animation-duration: 90ms !important;
+    animation-timing-function: ease-in !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    [data-slot='dialog-overlay'],
+    [data-slot='dialog-content'] {
+        animation: none !important;
+    }
+}
+
+/*==============================================================================================================*/
+/* Champs de saisie                                                                                             */
+/* Hauteur fixe, coins rounded-md, bord identique dans tous les modes.                                          */
+/* Saisie : fond teinté gris ISGA. Consultation : fond presque blanc, texte plus clair.                         */
+/*==============================================================================================================*/
+@layer components {
+    .champ {
+        display: block;
+        width: 100%;
+        height: 2.75rem;
+        padding: 0 0.875rem;
+        border: 1px solid var(--champ-bord);
+        border-radius: var(--radius-md);
+        background-color: var(--champ-fond);
+        color: var(--champ-texte);
+        font-size: 0.9375rem;
+        font-weight: 500;
+        transition: border-color 120ms ease,
+        background-color 120ms ease,
+        color 120ms ease;
+    }
+
+    /* Champs qui ne sont pas des <input> : select, date, heure, fichier */
+    .champ:is(button, label, div) {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
+        text-align: left;
+    }
+
+    button.champ:not(:disabled),
+    label.champ {
+        cursor: pointer;
+    }
+
+    /* Zone de texte : seule exception à la hauteur fixe */
+    textarea.champ {
+        height: auto;
+        min-height: 6rem;
+        padding: 0.625rem 0.875rem;
+        line-height: 1.5rem;
+        resize: vertical;
+    }
+
+    /* Nombres : pas de flèches du navigateur */
+    input[type='number'].champ {
+        -moz-appearance: textfield;
+        appearance: textfield;
+    }
+
+    input[type='number'].champ::-webkit-inner-spin-button,
+    input[type='number'].champ::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    .champ::placeholder,
+    .champ .champ-vide {
+        color: var(--champ-placeholder);
+        font-weight: 400;
+        opacity: 1;
+    }
+
+    /* Focus (ou menu ouvert) : seule la couleur du bord fonce, le texte passe en graphite */
+    .champ:focus-visible,
+    .champ[data-ouvert='true'] {
+        outline: none;
+        border-color: var(--champ-bord-focus);
+        background-color: var(--champ-fond-focus);
+        color: var(--champ-texte-focus);
+    }
+
+    /* Erreur de validation : bord rouge (même épaisseur), fond légèrement rosé */
+    .champ[aria-invalid='true'] {
+        border-color: var(--absent);
+        background-color: color-mix(in oklab, var(--absent) 5%, var(--champ-fond));
+    }
+
+    /* Consultation : même bord, fond presque blanc, texte plus clair */
+    .champ:disabled,
+    .champ[aria-disabled='true'] {
+        background-color: var(--champ-desactive-fond);
+        color: var(--champ-desactive-texte);
+        font-weight: 400;
+        cursor: default;
+        opacity: 1;
+        -webkit-text-fill-color: var(--champ-desactive-texte);
+    }
+
+    .champ:disabled::placeholder,
+    .champ:disabled .champ-vide,
+    .champ[aria-disabled='true'] .champ-vide {
+        color: var(--champ-desactive-texte);
+        -webkit-text-fill-color: var(--champ-desactive-texte);
+    }
+
+    /*==========================================================================================================*/
+    /* Panneau déroulant (select, multi-select, heure, calendrier)                                              */
+    /*==========================================================================================================*/
+    .champ-menu {
+        position: absolute;
+        z-index: 50;
+        top: calc(100% + 0.25rem);
+        left: 0;
+        right: 0;
+        overflow: hidden;
+        border: 1px solid var(--champ-bord);
+        border-radius: var(--radius-md);
+        background-color: var(--popover);
+        color: var(--popover-foreground);
+        box-shadow: 0 12px 28px -12px rgb(0 0 0 / 0.25);
+    }
+
+    .champ-option {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
+        padding: 0.5rem 0.75rem;
+        border-radius: var(--radius-sm);
+        font-size: 0.875rem;
+        cursor: pointer;
+    }
+
+    .champ-option[data-actif='true'] {
+        background-color: var(--champ-fond);
+    }
+
+    .champ-option[data-choisi='true'] {
+        font-weight: 600;
+    }
+
+    /*==========================================================================================================*/
+    /* Case à cocher dans le même esprit                                                                        */
+    /*==========================================================================================================*/
+    .champ-case {
+        appearance: none;
+        flex-shrink: 0;
+        width: 1.125rem;
+        height: 1.125rem;
+        border: 1px solid var(--champ-bord);
+        border-radius: var(--radius-sm);
+        background-color: var(--champ-fond);
+        background-position: center;
+        background-repeat: no-repeat;
+        background-size: 0.75rem;
+        cursor: pointer;
+        transition: background-color 120ms ease;
+    }
+
+    .champ-case:checked {
+        border-color: var(--isga-gris);
+        background-color: var(--isga-gris);
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='white' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3.5 8.5l3 3 6-7'/%3E%3C/svg%3E");
+    }
+
+    .dark .champ-case:checked {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%231C1C1B' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3.5 8.5l3 3 6-7'/%3E%3C/svg%3E");
+    }
+
+    .champ-case:focus-visible {
+        outline: 2px solid var(--isga-gris);
+        outline-offset: 2px;
+    }
+
+    /* Case en consultation : même bord, fond presque blanc */
+    .champ-case:disabled {
+        background-color: var(--champ-desactive-fond);
+        cursor: default;
+    }
+
+    .champ-case:disabled:checked {
+        border-color: var(--champ-desactive-coche);
+        background-color: var(--champ-desactive-coche);
     }
 }

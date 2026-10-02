@@ -3,19 +3,23 @@
 namespace App\Features\Filiere;
 
 use App\_Core\Base\BaseModel;
-use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\_Core\Services\CouleurService;
 use App\Features\Cycle\Cycle;
 use App\Features\NiveauEtude\NiveauEtude;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * @property int $id
  * @property string $cle
+ * @property int $cycle_id
  * @property string $code
  * @property string $nom
+ * @property string|null $couleur
  * @property string|null $description
- * @property int $cycle_id
  * @property Cycle $cycle
+ * @property-read string $couleur_effective
  */
 class Filiere extends BaseModel {
     protected $table = 'filieres';
@@ -40,9 +44,18 @@ class Filiere extends BaseModel {
 
 
 
-    public function can_be_deleted() : bool {
-        return !$this->niveaux()->exists();
+    //[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][]
+    //
+    // ATTRIBUTES
+    //
+    //[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][]
+    protected function couleurEffective() : Attribute {
+        //==============================================================================================================
+        // Sa couleur, sinon celle de son cycle
+        //==============================================================================================================
+        return Attribute::get(fn() => $this->couleur ?? $this->cycle?->couleur ?? CouleurService::couleur_defaut);
     }
+
 
 
     //[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][]
@@ -51,6 +64,9 @@ class Filiere extends BaseModel {
     //
     //[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][]
     public static function faker(array $params = []) : array {
+        //==============================================================================================================
+        // Une filière pas encore créée (en comptant les supprimées)
+        //==============================================================================================================
         $filieres = [
             'GI'  => "Génie Informatique",
             'GE'  => "Génie Électrique",
@@ -70,10 +86,19 @@ class Filiere extends BaseModel {
         $code       = fake()->randomElement(array_diff(array_keys($filieres), $codes_pris));
 
         return [
+            'cycle_id'    => ($params['cycle'] ?? Cycle::query()
+                                                       ->firstOrFail())->id,
             'code'        => $code,
             'nom'         => $filieres[$code],
+            'couleur'     => fake()->randomElement(CouleurService::get_valeurs()),
             'description' => fake('fr_FR')->sentence(12),
-            'cycle_id'    => ($params['cycle'] ?? Cycle::query()->firstOrFail())->id,
         ];
+    }
+
+
+
+    public function can_be_deleted() : bool {
+        return !$this->niveaux()
+                     ->exists();
     }
 }

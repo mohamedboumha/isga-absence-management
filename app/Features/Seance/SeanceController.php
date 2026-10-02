@@ -2,7 +2,9 @@
 
 namespace App\Features\Seance;
 
+use App\_Core\Services\NotificationService;
 use App\_Core\Services\RendersService;
+use App\Features\AnneeUniversitaire\AnneeUniversitaireService;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
@@ -44,11 +46,24 @@ class SeanceController extends Controller {
             ? "Séance {$seance->module->code} — {$seance->groupe->nom} — {$seance->date?->format('d/m/Y')}"
             : "Nouvelle séance";
 
+
+        //==============================================================================================================
+        // Année en cours : limite les dates (et les groupes) proposés à la création d'une séance
+        //==============================================================================================================
+        $annee_active = AnneeUniversitaireService::get_active();
+
         return Inertia::render(self::page_detail, [
-            'mode_vue'    => $mode_vue,
-            'titre_page'  => $titre_page,
-            'breadcrumbs' => self::get_breadcrumbs($titre_page, $seance->exists ? route(self::route_detail, ['cle' => $seance->cle]) : route(self::route_detail)),
-            'item'        => self::item_to_array($seance),
+            'mode_vue'     => $mode_vue,
+            'titre_page'   => $titre_page,
+            'breadcrumbs'  => self::get_breadcrumbs($titre_page, $seance->exists ? route(self::route_detail, ['cle' => $seance->cle]) : route(self::route_detail)),
+            'item'         => self::item_to_array($seance),
+            'annee_active' => $annee_active ? [
+                'id'         => $annee_active->id,
+                'libelle'    => $annee_active->libelle,
+                'date_debut' => $annee_active->date_debut?->format('Y-m-d'),
+                'date_fin'   => $annee_active->date_fin?->format('Y-m-d'),
+            ] : null,
+            'consultation' => $mode_vue === RendersService::mode_consultation ? SeanceConsultationService::get($seance) : null,
             ...SeanceService::get_selects(),
         ]);
     }
@@ -58,6 +73,8 @@ class SeanceController extends Controller {
     public function update(SeanceRequest $request, ?string $cle = null) : RedirectResponse {
         $seance = SeanceService::process_update_or_create($cle, $request->validated());
 
+        NotificationService::succes($cle ? "Séance enregistrée." : "Séance planifiée.");
+
         return to_route(self::route_detail, ['cle' => $seance->cle]);
     }
 
@@ -65,6 +82,8 @@ class SeanceController extends Controller {
 
     public function delete(string $cle) : RedirectResponse {
         SeanceService::process_delete($cle);
+
+        NotificationService::succes("Séance supprimée.");
 
         return to_route(self::route_list);
     }

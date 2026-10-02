@@ -2,6 +2,7 @@
 
 namespace App\Features\Enseignant;
 
+use App\_Core\Services\NotificationService;
 use App\_Core\Services\RendersService;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
@@ -40,16 +41,15 @@ class EnseignantController extends Controller {
             abort(403, "Cet enseignant ne peut pas être modifié.");
         }
 
-        $titre_page = $enseignant->exists
-            ? "Enseignant {$enseignant->nom_complet}"
-            : "Nouvel enseignant";
+        $titre_page = $enseignant->exists ? $enseignant->nom_complet : "Nouvel enseignant";
 
         return Inertia::render(self::page_detail, [
-            'mode_vue'    => $mode_vue,
-            'titre_page'  => $titre_page,
-            'breadcrumbs' => self::get_breadcrumbs($titre_page, $enseignant->exists ? route(self::route_detail, ['cle' => $enseignant->cle]) : route(self::route_detail)),
-            'item'        => self::item_to_array($enseignant),
-            'modules'     => EnseignantService::get_modules_pour_select(),
+            'mode_vue'     => $mode_vue,
+            'titre_page'   => $titre_page,
+            'breadcrumbs'  => self::get_breadcrumbs($titre_page, $enseignant->exists ? route(self::route_detail, ['cle' => $enseignant->cle]) : route(self::route_detail)),
+            'item'         => self::item_to_array($enseignant),
+            'modules'      => EnseignantService::get_modules_pour_select(),
+            'consultation' => $mode_vue === RendersService::mode_consultation ? EnseignantConsultationService::get($enseignant) : null,
         ]);
     }
 
@@ -57,6 +57,10 @@ class EnseignantController extends Controller {
 
     public function update(EnseignantRequest $request, ?string $cle = null) : RedirectResponse {
         $enseignant = EnseignantService::process_update_or_create($cle, $request->validated());
+
+        NotificationService::succes($cle
+                                        ? "Enseignant enregistré."
+                                        : "Enseignant créé. Un lien pour choisir son mot de passe lui a été envoyé.");
 
         return to_route(self::route_detail, ['cle' => $enseignant->cle]);
     }
@@ -66,6 +70,8 @@ class EnseignantController extends Controller {
     public function delete(string $cle) : RedirectResponse {
         EnseignantService::process_delete($cle);
 
+        NotificationService::succes("Enseignant supprimé. Son compte est désactivé.");
+
         return to_route(self::route_list);
     }
 
@@ -74,9 +80,7 @@ class EnseignantController extends Controller {
     protected static function item_to_array(Enseignant $enseignant) : array {
         return [
             ...$enseignant->toArray(),
-            'modules'        => $enseignant->exists ? $enseignant->modules()
-                                                                 ->pluck('modules.id')
-                                                                 ->all() : [],
+            'modules'        => $enseignant->exists ? $enseignant->modules()->pluck('modules.id')->all() : [],
             'compte_actif'   => $enseignant->user?->actif ?? false,
             'can_be_deleted' => $enseignant->exists && $enseignant->can_be_deleted(),
         ];

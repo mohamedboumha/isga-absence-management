@@ -3,14 +3,15 @@
 namespace App\Features\NiveauEtude;
 
 use App\_Core\Base\BaseModel;
+use App\_Core\Services\CouleurService;
 use App\Features\Cycle\Cycle;
 use App\Features\Filiere\Filiere;
+use App\Features\Groupe\Groupe;
+use App\Features\Module\Module;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use App\Features\Groupe\Groupe;
-use App\Features\Module\Module;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
@@ -28,6 +29,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property Collection<int, NiveauEtude> $precedents
  * @property-read bool $est_derniere_annee
  * @property-read string $suivants_render
+ * @property-read string $couleur_effective
  */
 class NiveauEtude extends BaseModel {
     protected $table = 'niveaux_etudes';
@@ -79,6 +81,8 @@ class NiveauEtude extends BaseModel {
         return $this->belongsToMany(NiveauEtude::class, 'parcours', 'niveau_suivant_id', 'niveau_id');
     }
 
+
+
     public function groupes() : HasMany {
         return $this->hasMany(Groupe::class, 'niveau_etude_id');
     }
@@ -88,6 +92,7 @@ class NiveauEtude extends BaseModel {
     public function modules() : HasMany {
         return $this->hasMany(Module::class, 'niveau_etude_id');
     }
+
 
 
     //[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][]
@@ -113,6 +118,16 @@ class NiveauEtude extends BaseModel {
 
 
 
+    protected function couleurEffective() : Attribute {
+        //==============================================================================================================
+        // Couleur de sa filière (qui hérite elle-même de son cycle), sinon celle de son cycle (1AP, 2AP)
+        // Les groupes et les modules affichent cette couleur
+        //==============================================================================================================
+        return Attribute::get(fn() => $this->filiere?->couleur_effective ?? $this->cycle?->couleur ?? CouleurService::couleur_defaut);
+    }
+
+
+
     public function get_label() : string {
         return $this->libelle;
     }
@@ -125,6 +140,8 @@ class NiveauEtude extends BaseModel {
     //
     //[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][]
     public function can_be_deleted() : bool {
-        return !$this->groupes()->exists() && !$this->modules()->exists();
+        return !$this->groupes()
+                     ->exists() && !$this->modules()
+                                         ->exists();
     }
 }

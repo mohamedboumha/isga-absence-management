@@ -4,10 +4,12 @@ namespace App\Features\Justificatif;
 
 use App\_Core\Builders\Table\TableBuilder;
 use App\_Core\Builders\Table\TableColumn;
+use App\_Core\Builders\Table\TableFilter;
 use App\_Core\Services\RendersService;
 use App\Features\Absence\Absence;
 use App\Features\Etudiant\Etudiant;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -51,7 +53,7 @@ class JustificatifService {
 
 
     //==================================================================================================================
-    // Tableau de la liste, filtrable par statut (BF-22)
+    // Tableau de la liste, filtrable par statut (onglets, BF-22) et par filtres ; recherche par nom ou CNE
     //==================================================================================================================
     public static function get_table(?string $statut) : array {
         $query = Justificatif
@@ -69,14 +71,9 @@ class JustificatifService {
                     ::new()
                     ->label("Étudiant")
                     ->nom_colonne('etudiant.nom_complet')
-                    ->render(RendersService::render_chaine)
-            )
-            ->add_column(
-                TableColumn
-                    ::new()
-                    ->label("CNE")
-                    ->nom_colonne('etudiant.cne')
-                    ->render(RendersService::render_chaine)
+                    ->render(RendersService::render_personne)
+                    ->sous_texte('etudiant.cne')
+                    ->recherche_sur(['etudiant.nom', 'etudiant.prenom', 'etudiant.cne'])
             )
             ->add_column(
                 TableColumn
@@ -84,6 +81,7 @@ class JustificatifService {
                     ->label("Type")
                     ->nom_colonne('type_render')
                     ->render(RendersService::render_chaine)
+                    ->tri_sur('type')
             )
             ->add_column(
                 TableColumn
@@ -91,6 +89,7 @@ class JustificatifService {
                     ->label("Période")
                     ->nom_colonne('periode_render')
                     ->render(RendersService::render_chaine)
+                    ->tri_sur('date_debut')
             )
             ->add_column(
                 TableColumn
@@ -103,16 +102,45 @@ class JustificatifService {
             ->add_column(
                 TableColumn
                     ::new()
-                    ->label("Hors délai")
-                    ->nom_colonne('hors_delai')
-                    ->render(RendersService::render_boolean)
+                    ->label("Délai")
+                    ->nom_colonne('delai')
+                    ->render(RendersService::render_statut)
+                    ->valeur(fn(Justificatif $justificatif) => $justificatif->hors_delai ? 'hors_delai' : null)
             )
             ->add_column(
                 TableColumn
                     ::new()
                     ->label("Statut")
-                    ->nom_colonne('statut_render')
-                    ->render(RendersService::render_chaine)
+                    ->nom_colonne('statut')
+                    ->render(RendersService::render_statut)
+                    ->triable()
+            )
+            //==========================================================================================================
+            // Filtres (en plus des onglets de statut)
+            //==========================================================================================================
+            ->add_filtre(
+                TableFilter
+                    ::new('type')
+                    ->label("Type")
+                    ->select(array_map(fn(string $cle, string $label) => ['valeur' => $cle, 'label' => $label], array_keys(self::types), self::types))
+                    ->sur_colonne('type')
+            )
+            ->add_filtre(
+                TableFilter
+                    ::new('depot')
+                    ->label("Date de dépôt")
+                    ->periode()
+                    ->sur_colonne('date_depot')
+            )
+            ->add_filtre(
+                TableFilter
+                    ::new('delai')
+                    ->label("Délai")
+                    ->oui_non("Hors délai", "Dans les délais")
+                    ->appliquer(fn(Builder $query, bool $hors_delai) => $query->whereRaw(
+                        'date_depot ' . ($hors_delai ? '>' : '<=') . ' DATE_ADD(date_fin, INTERVAL ? DAY)',
+                        [self::delai_depot_jours]
+                    ))
             )
             ->default_tri('date_depot', 'desc')
             ->row_url(fn(Justificatif $justificatif) => route('justificatif.detail', ['cle' => $justificatif->cle]))
@@ -135,6 +163,9 @@ class JustificatifService {
 
 
 
+    //==================================================================================================================
+    // Selects du formulaire ; le groupe affiché est celui de l'année active
+    //==================================================================================================================
     public static function get_selects() : array {
         return [
             'etudiants' => Etudiant
@@ -206,11 +237,13 @@ class JustificatifService {
 
             $absences = $justificatif->get_absences_couvertes();
 
-            $absences->each(fn(Absence $absence) => $absence->forceFill(
-                [
-                    'justifiee'       => true,
-                    'justificatif_id' => $justificatif->id,
-                ])
+            //==========================================================================================================
+            // Une par une, pour que chaque absence apparaisse dans le journal
+            //==========================================================================================================
+            $absences->each(fn(Absence $absence) => $absence->forceFill([
+                                                                            'justifiee'       => true,
+                                                                            'justificatif_id' => $justificatif->id,
+                                                                        ])
                                                             ->save());
 
             return $absences->count();

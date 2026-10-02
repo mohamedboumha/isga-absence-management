@@ -9,18 +9,20 @@ use Illuminate\Validation\ValidationException;
 
 class FiliereService {
     //==================================================================================================================
-    // Tableau de la liste (mode_list)
+    // Tableau de la liste (mode_list) : la filière et son cycle en badges, chacun à sa couleur
     //==================================================================================================================
     public static function get_table() : array {
         return TableBuilder
             ::new(Filiere::query()
-                         ->with('cycle'))
+                         ->with('cycle')
+                         ->withCount('niveaux'))
             ->add_column(
                 TableColumn
                     ::new()
                     ->label("Code")
                     ->nom_colonne('code')
-                    ->render(RendersService::render_chaine)
+                    ->render(RendersService::render_badge)
+                    ->couleur('couleur_effective')
                     ->triable()
                     ->cherchable()
             )
@@ -37,8 +39,17 @@ class FiliereService {
                 TableColumn
                     ::new()
                     ->label("Cycle")
-                    ->nom_colonne('cycle.nom')
-                    ->render(RendersService::render_chaine)
+                    ->nom_colonne('cycle.code')
+                    ->render(RendersService::render_badge)
+                    ->couleur('cycle.couleur')
+                    ->sous_texte('cycle.nom')
+            )
+            ->add_column(
+                TableColumn
+                    ::new()
+                    ->label("Niveaux")
+                    ->nom_colonne('niveaux_count')
+                    ->render(RendersService::render_nombre)
             )
             ->default_tri('code')
             ->row_url(fn(Filiere $filiere) => route('filiere.detail', ['cle' => $filiere->cle]))
@@ -47,6 +58,9 @@ class FiliereService {
 
 
 
+    //==================================================================================================================
+    // Pour les selects : chaque filière porte son cycle (pour filtrer côté Vue)
+    //==================================================================================================================
     public static function get_filieres_pour_select() : array {
         return Filiere
             ::query()
@@ -72,11 +86,9 @@ class FiliereService {
         $filiere = self::get_or_fail($cle);
 
         if (!$filiere->can_be_deleted()) {
-            throw ValidationException::withMessages(
-                [
-                    'filiere' => "La filière {$filiere->code} ne peut pas être supprimée : des niveaux d'études l'utilisent.",
-                ]
-            );
+            throw ValidationException::withMessages([
+                                                        'filiere' => "La filière {$filiere->code} ne peut pas être supprimée : des niveaux d'études l'utilisent.",
+                                                    ]);
         }
 
         $filiere->delete();

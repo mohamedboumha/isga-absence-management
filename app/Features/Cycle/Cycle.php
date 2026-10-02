@@ -8,11 +8,12 @@ use App\Features\NiveauEtude\NiveauEtude;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
- * @property int    $id
+ * @property int $id
  * @property string $cle
  * @property string $code
  * @property string $nom
- * @property int    $nb_annees
+ * @property int $nb_annees
+ * @property string $couleur
  */
 class Cycle extends BaseModel {
     protected $table = 'cycles';
@@ -53,6 +54,8 @@ class Cycle extends BaseModel {
     //
     //[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][]
     public function can_be_deleted() : bool {
-        return !$this->filieres()->exists() && !$this->niveaux()->exists();
+        return !$this->filieres()
+                     ->exists() && !$this->niveaux()
+                                         ->exists();
     }
 }

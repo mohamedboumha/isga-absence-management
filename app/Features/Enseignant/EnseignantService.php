@@ -15,47 +15,46 @@ use Illuminate\Validation\ValidationException;
 
 class EnseignantService {
     //==================================================================================================================
-    // Tableau de la liste (mode_list)
+    // Tableau de la liste (mode_list) : l'enseignant (initiales, nom, e-mail), ses modules, son compte
     //==================================================================================================================
     public static function get_table() : array {
         return TableBuilder
             ::new(Enseignant::query()
-                            ->with('user'))
+                            ->with('user')
+                            ->withCount('modules'))
             ->add_column(
                 TableColumn
                     ::new()
-                    ->label("Nom")
-                    ->nom_colonne('nom')
+                    ->label("Enseignant")
+                    ->nom_colonne('nom_complet')
+                    ->render(RendersService::render_personne)
+                    ->sous_texte('email')
+                    ->tri_sur('nom')
+                    ->recherche_sur(['nom', 'prenom', 'email'])
+            )
+            ->add_column(
+                TableColumn
+                    ::new()
+                    ->label("Téléphone")
+                    ->nom_colonne('telephone')
                     ->render(RendersService::render_chaine)
-                    ->triable()
-                    ->cherchable()
             )
             ->add_column(
                 TableColumn
                     ::new()
-                    ->label("Prénom")
-                    ->nom_colonne('prenom')
-                    ->render(RendersService::render_chaine)
-                    ->triable()
-                    ->cherchable()
+                    ->label("Modules")
+                    ->nom_colonne('modules_count')
+                    ->render(RendersService::render_nombre)
             )
             ->add_column(
                 TableColumn
                     ::new()
-                    ->label("E-mail")
-                    ->nom_colonne('email')
-                    ->render(RendersService::render_chaine)
-                    ->triable()
-                    ->cherchable()
+                    ->label("Compte")
+                    ->nom_colonne('compte')
+                    ->render(RendersService::render_statut)
+                    ->valeur(fn(Enseignant $enseignant) => $enseignant->user?->actif ? 'actif' : 'desactive')
             )
-            ->add_column(
-                TableColumn
-                    ::new()
-                    ->label("Compte actif")
-                    ->nom_colonne('user.actif')
-                    ->render(RendersService::render_boolean)
-            )
-            ->default_tri('nom')
+            ->default_tri('nom_complet')
             ->row_url(fn(Enseignant $enseignant) => route('enseignant.detail', ['cle' => $enseignant->cle]))
             ->get();
     }

@@ -10,20 +10,32 @@ use Illuminate\Database\Seeder;
 
 class StructureIsgaSeeder extends Seeder {
     //==================================================================================================================
-    // Cycles : code => [nom, durée]
+    // Cycles : code => [nom, durée, couleur]
     //==================================================================================================================
     const array cycles = [
-        'ING' => ["Cycle ingénieur", 5],
-        'MST' => ["Master", 2],
-        'LIC' => ["Licence", 1],
+        'ING' => ["Cycle ingénieur", 5, '#0369A1'],
+        'MST' => ["Master", 2, '#7C3AED'],
+        'LIC' => ["Licence", 1, '#B45309'],
     ];
 
     //==================================================================================================================
-    // Filières (spécialités) par cycle. Le nom complet est à compléter depuis l'écran Filières.
+    // Filières (spécialités) par cycle : code => couleur. Le nom complet est à compléter depuis l'écran Filières.
     //==================================================================================================================
     const array filieres = [
-        'ING' => ['ISI', 'ISII', 'IDWM', 'SIICQ', 'IABD', 'IRSS'],
-        'MST' => ['CF', 'MDEC', 'CCA', 'IF'],
+        'ING' => [
+            'ISI'   => '#0E7490',
+            'ISII'  => '#4F46E5',
+            'IDWM'  => '#15803D',
+            'SIICQ' => '#4D7C0F',
+            'IABD'  => '#BE185D',
+            'IRSS'  => '#475569',
+        ],
+        'MST' => [
+            'CF'   => '#86198F',
+            'MDEC' => '#C2410C',
+            'CCA'  => '#1E3A8A',
+            'IF'   => '#0F766E',
+        ],
     ];
 
     //==================================================================================================================
@@ -71,16 +83,18 @@ class StructureIsgaSeeder extends Seeder {
                                                                                                  'code'      => $code,
                                                                                                  'nom'       => $cycle[0],
                                                                                                  'nb_annees' => $cycle[1],
+                                                                                                 'couleur'   => $cycle[2],
                                                                                              ]));
 
         $filieres = collect();
 
         foreach (self::filieres as $code_cycle => $codes) {
-            foreach ($codes as $code) {
+            foreach ($codes as $code => $couleur) {
                 $filieres[$code] = Filiere::create([
                                                        'cycle_id' => $cycles[$code_cycle]->id,
                                                        'code'     => $code,
                                                        'nom'      => $code,
+                                                       'couleur'  => $couleur,
                                                    ]);
             }
         }

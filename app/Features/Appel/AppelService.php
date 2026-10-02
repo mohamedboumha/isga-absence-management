@@ -8,11 +8,11 @@ use App\_Core\Services\RendersService;
 use App\Features\Absence\Absence;
 use App\Features\Enseignant\Enseignant;
 use App\Features\Etudiant\Etudiant;
+use App\Features\Justificatif\JustificatifService;
 use App\Features\Seance\Seance;
 use App\Features\User\UserService;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
-use App\Features\Justificatif\JustificatifService;
 
 class AppelService {
     //[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][]
@@ -104,7 +104,7 @@ class AppelService {
 
 
     //==================================================================================================================
-    // Étudiants du groupe, avec leur absence éventuelle pour cette séance
+    // Étudiants inscrits dans le groupe de la séance, avec leur absence éventuelle
     //==================================================================================================================
     public static function get_etudiants_appel(Seance $seance) : array {
         $absences = $seance
@@ -142,7 +142,7 @@ class AppelService {
 
 
             //==========================================================================================================
-            // Étudiants redevenus présents : absence archivée (soft delete)
+            // Étudiants redevenus présents : absence archivée (soft delete), une par une pour le journal
             //==========================================================================================================
             Absence
                 ::query()
@@ -150,6 +150,7 @@ class AppelService {
                 ->when($ids_absents, fn($query) => $query->whereNotIn('etudiant_id', $ids_absents))
                 ->get()
                 ->each(fn(Absence $absence) => $absence->delete());
+
 
             //==========================================================================================================
             // Étudiants absents : création, ou restauration d'une absence archivée
@@ -176,6 +177,7 @@ class AppelService {
 
                 $absence->justifiee       = $justificatif !== null;
                 $absence->justificatif_id = $justificatif?->id;
+
                 $absence->save();
             }
 
@@ -209,14 +211,8 @@ class AppelService {
                     ->label("Date")
                     ->nom_colonne('date')
                     ->render(RendersService::render_date)
+                    ->sous_texte('horaire_render')
                     ->triable()
-            )
-            ->add_column(
-                TableColumn
-                    ::new()
-                    ->label("Horaire")
-                    ->nom_colonne('horaire_render')
-                    ->render(RendersService::render_chaine)
             )
             ->add_column(
                 TableColumn
@@ -224,6 +220,7 @@ class AppelService {
                     ->label("Module")
                     ->nom_colonne('module.code')
                     ->render(RendersService::render_chaine)
+                    ->sous_texte('module.intitule')
             )
             ->add_column(
                 TableColumn
@@ -243,18 +240,12 @@ class AppelService {
                 TableColumn
                     ::new()
                     ->label("Statut")
-                    ->nom_colonne('statut_render')
-                    ->render(RendersService::render_chaine)
-            )
-            ->add_column(
-                TableColumn
-                    ::new()
-                    ->label("Appel fait")
-                    ->nom_colonne('appel_fait')
-                    ->render(RendersService::render_boolean)
+                    ->nom_colonne('statut_cle')
+                    ->render(RendersService::render_statut)
             )
             ->default_tri('date', 'desc')
             ->row_url(fn(Seance $seance) => route('appel.detail', ['cle' => $seance->cle]))
+            ->actions_consultation_seule()
             ->get();
     }
 }

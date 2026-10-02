@@ -4,10 +4,13 @@ namespace App\Features\Seance;
 
 use App\_Core\Builders\Table\TableBuilder;
 use App\_Core\Builders\Table\TableColumn;
+use App\_Core\Builders\Table\TableFilter;
 use App\_Core\Services\RendersService;
 use App\Features\Enseignant\Enseignant;
+use App\Features\Groupe\Groupe;
 use App\Features\Groupe\GroupeService;
 use App\Features\Module\Module;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Validation\ValidationException;
 
 class SeanceService {
@@ -22,7 +25,7 @@ class SeanceService {
 
 
     //==================================================================================================================
-    // Créneaux habituels (utilisés par le faker)
+    // Créneaux habituels
     //==================================================================================================================
     const array creneaux = [
         ['08:30', '10:30'],
@@ -33,33 +36,44 @@ class SeanceService {
 
 
     //==================================================================================================================
-    // Tableau de la liste (mode_list)
+    // Statuts calculés (mêmes clés que Seance::statut_cle et statuts.ts)
+    //==================================================================================================================
+    const array statuts = [
+        'appel_a_faire' => "Appel à faire",
+        'appel_fait'    => "Appel fait",
+        'planifiee'     => "Planifiée",
+        'annulee'       => "Annulée",
+    ];
+
+
+
+    //==================================================================================================================
+    // Tableau de la liste (mode_list) : le module en badge, le statut en pastille
     //==================================================================================================================
     public static function get_table() : array {
         return TableBuilder
-            ::new(Seance::query()
-                        ->with(['module', 'enseignant', 'groupe']))
+            ::new(
+                Seance
+                    ::query()
+                    ->with(['module.niveau_etude.cycle', 'module.niveau_etude.filiere.cycle', 'enseignant', 'groupe'])
+            )
             ->add_column(
                 TableColumn
                     ::new()
                     ->label("Date")
                     ->nom_colonne('date')
                     ->render(RendersService::render_date)
+                    ->sous_texte('horaire_render')
                     ->triable()
-            )
-            ->add_column(
-                TableColumn
-                    ::new()
-                    ->label("Horaire")
-                    ->nom_colonne('horaire_render')
-                    ->render(RendersService::render_chaine)
             )
             ->add_column(
                 TableColumn
                     ::new()
                     ->label("Module")
                     ->nom_colonne('module.code')
-                    ->render(RendersService::render_chaine)
+                    ->render(RendersService::render_badge)
+                    ->couleur('module.niveau_etude.couleur_effective')
+                    ->sous_texte('module.intitule')
             )
             ->add_column(
                 TableColumn
@@ -95,12 +109,65 @@ class SeanceService {
                 TableColumn
                     ::new()
                     ->label("Statut")
-                    ->nom_colonne('statut_render')
-                    ->render(RendersService::render_chaine)
+                    ->nom_colonne('statut_cle')
+                    ->render(RendersService::render_statut)
+            )
+            //==========================================================================================================
+            // Filtres
+            //==========================================================================================================
+            ->add_filtre(
+                TableFilter
+                    ::new('periode')
+                    ->label("Période")
+                    ->periode()
+                    ->sur_colonne('date')
+            )
+            ->add_filtre(
+                TableFilter
+                    ::new('statut')
+                    ->label("Statut")
+                    ->select(array_map(fn(string $cle, string $label) => ['valeur' => $cle, 'label' => $label], array_keys(self::statuts), self::statuts))
+                    ->appliquer(fn(Builder $query, string $valeur) => self::filtrer_par_statut($query, $valeur))
+            )
+            ->add_filtre(
+                TableFilter
+                    ::new('groupe')
+                    ->label("Groupe")
+                    ->select(GroupeService::get_groupes_pour_select())
+                    ->sur_colonne('groupe_id')
+            )
+            ->add_filtre(
+                TableFilter
+                    ::new('enseignant')
+                    ->label("Enseignant")
+                    ->select(self::get_enseignants_pour_select())
+                    ->sur_colonne('enseignant_id')
+            )
+            ->add_filtre(
+                TableFilter
+                    ::new('type')
+                    ->label("Type")
+                    ->select(array_map(fn(string $type) => ['valeur' => $type, 'label' => $type], self::types))
+                    ->sur_colonne('type')
             )
             ->default_tri('date', 'desc')
             ->row_url(fn(Seance $seance) => route('seance.detail', ['cle' => $seance->cle]))
             ->get();
+    }
+
+
+
+    //==================================================================================================================
+    // Même logique que Seance::statut_cle, traduite en SQL
+    //==================================================================================================================
+    protected static function filtrer_par_statut(Builder $query, string $statut) : void {
+        match ($statut) {
+            'annulee'       => $query->where('annulee', true),
+            'appel_fait'    => $query->where('annulee', false)->whereNotNull('appel_fait_le'),
+            'appel_a_faire' => $query->where('annulee', false)->whereNull('appel_fait_le')->whereDate('date', '<=', today()),
+            'planifiee'     => $query->where('annulee', false)->whereNull('appel_fait_le')->whereDate('date', '>', today()),
+            default         => null,
+        };
     }
 
 
@@ -118,13 +185,49 @@ class SeanceService {
 
 
 
+    public static function get_enseignants_pour_select() : array {
+        return Enseignant
+            ::query()
+            ->orderBy('nom')
+            ->get()
+            ->map(fn(Enseignant $enseignant) => [
+                'valeur' => $enseignant->id,
+                'label'  => $enseignant->nom_complet,
+            ])
+            ->all();
+    }
+
+
+
     //==================================================================================================================
     // Listes pour les selects du formulaire
+    // Groupe → Module → Enseignant : chaque option porte de quoi filtrer la liste suivante côté Vue
     //==================================================================================================================
     public static function get_selects() : array {
         return [
             //==========================================================================================================
-            // Chaque module porte la liste de ses enseignants (pour filtrer le select Enseignant côté Vue)
+            // Groupes (année la plus récente en premier), avec leur année et leur niveau d'études
+            //==========================================================================================================
+            'groupes'     => Groupe
+                ::query()
+                ->with('annee_universitaire')
+                ->join('annees_universitaires', 'annees_universitaires.id', '=', 'groupes.annee_universitaire_id')
+                ->orderByDesc('annees_universitaires.date_debut')
+                ->orderBy('groupes.nom')
+                ->select('groupes.*')
+                ->get()
+                ->map(fn(Groupe $groupe) => [
+                    'valeur'                 => $groupe->id,
+                    'label'                  => "{$groupe->nom} ({$groupe->annee_universitaire->libelle})",
+                    'annee_universitaire_id' => $groupe->annee_universitaire_id,
+                    'niveau_etude_id'        => $groupe->niveau_etude_id,
+                    'date_debut'             => $groupe->annee_universitaire->date_debut?->format('Y-m-d'),
+                    'date_fin'               => $groupe->annee_universitaire->date_fin?->format('Y-m-d'),
+                ])
+                ->all(),
+
+            //==========================================================================================================
+            // Modules, avec leur niveau d'études (filtre par groupe) et leurs enseignants (filtre de l'enseignant)
             //==========================================================================================================
             'modules'     => Module
                 ::query()
@@ -132,21 +235,14 @@ class SeanceService {
                 ->orderBy('code')
                 ->get()
                 ->map(fn(Module $module) => [
-                    'valeur'         => $module->id,
-                    'label'          => "{$module->code} — {$module->intitule} ({$module->niveau_etude->code}, S{$module->semestre})",
-                    'enseignant_ids' => $module->enseignants->pluck('id')->all(),
+                    'valeur'          => $module->id,
+                    'label'           => "{$module->code} — {$module->intitule} (S{$module->semestre})",
+                    'niveau_etude_id' => $module->niveau_etude_id,
+                    'enseignant_ids'  => $module->enseignants->pluck('id')->all(),
                 ])
                 ->all(),
-            'enseignants' => Enseignant
-                ::query()
-                ->orderBy('nom')
-                ->get()
-                ->map(fn(Enseignant $enseignant) => [
-                    'valeur' => $enseignant->id,
-                    'label'  => $enseignant->nom_complet,
-                ])
-                ->all(),
-            'groupes'     => GroupeService::get_groupes_pour_select(),
+
+            'enseignants' => self::get_enseignants_pour_select(),
             'types'       => array_map(fn(string $type) => ['valeur' => $type, 'label' => $type], self::types),
         ];
     }

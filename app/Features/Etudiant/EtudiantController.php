@@ -2,13 +2,14 @@
 
 namespace App\Features\Etudiant;
 
+use App\_Core\Services\NotificationService;
 use App\_Core\Services\RendersService;
+use App\Features\AnneeUniversitaire\AnneeUniversitaireService;
+use App\Features\Inscription\InscriptionService;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
-use App\Features\Inscription\InscriptionService;
-use App\Features\AnneeUniversitaire\AnneeUniversitaireService;
 
 class EtudiantController extends Controller {
     const string page_list   = 'etudiant/etudiant-list';
@@ -42,9 +43,7 @@ class EtudiantController extends Controller {
             abort(403, "Cet étudiant ne peut pas être modifié.");
         }
 
-        $titre_page = $etudiant->exists
-            ? "Étudiant {$etudiant->nom_complet}"
-            : "Nouvel étudiant";
+        $titre_page = $etudiant->exists ? $etudiant->nom_complet : "Nouvel étudiant";
 
         return Inertia::render(self::page_detail, [
             'mode_vue'     => $mode_vue,
@@ -53,6 +52,7 @@ class EtudiantController extends Controller {
             'item'         => self::item_to_array($etudiant),
             'annee_active' => AnneeUniversitaireService::get_active()?->libelle,
             'historique'   => $etudiant->exists ? InscriptionService::get_historique($etudiant) : [],
+            'consultation' => $mode_vue === RendersService::mode_consultation ? EtudiantConsultationService::get($etudiant) : null,
             ...EtudiantService::get_selects(),
         ]);
     }
@@ -62,6 +62,8 @@ class EtudiantController extends Controller {
     public function update(EtudiantRequest $request, ?string $cle = null) : RedirectResponse {
         $etudiant = EtudiantService::process_update_or_create($cle, $request->validated());
 
+        NotificationService::succes($cle ? "Étudiant enregistré." : "Étudiant créé.");
+
         return to_route(self::route_detail, ['cle' => $etudiant->cle]);
     }
 
@@ -69,6 +71,8 @@ class EtudiantController extends Controller {
 
     public function delete(string $cle) : RedirectResponse {
         EtudiantService::process_delete($cle);
+
+        NotificationService::succes("Étudiant supprimé.");
 
         return to_route(self::route_list);
     }

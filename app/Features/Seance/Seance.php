@@ -2,16 +2,16 @@
 
 namespace App\Features\Seance;
 
-use App\Models\User;
 use App\_Core\Base\BaseModel;
 use App\Features\Absence\Absence;
 use App\Features\Enseignant\Enseignant;
 use App\Features\Groupe\Groupe;
 use App\Features\Module\Module;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * @property int $id
@@ -25,15 +25,18 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $type
  * @property string|null $salle
  * @property bool $annulee
+ * @property \Carbon\Carbon|null $appel_fait_le
+ * @property int|null $appel_fait_par
  * @property Module $module
  * @property Enseignant $enseignant
  * @property Groupe $groupe
+ * @property User|null $appel_fait_par_user
  * @property-read string $horaire_render
  * @property-read string $statut_render
+ * @property-read string $statut_cle
  * @property-read float $duree_heures
- * @property \Carbon\Carbon|null $appel_fait_le
- * @property int|null $appel_fait_par
  * @property-read bool $appel_fait
+ *
  * @method static Builder non_annulees()
  */
 class Seance extends BaseModel {
@@ -86,6 +89,7 @@ class Seance extends BaseModel {
     }
 
 
+
     //[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][]
     //
     // ATTRIBUTES
@@ -93,7 +97,7 @@ class Seance extends BaseModel {
     //[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][]
     protected function heureDebut() : Attribute {
         //==============================================================================================================
-        // MySQL renvoie "08:30:00" ; on expose "08:30" (format de <input type="time">)
+        // MySQL renvoie "08:30:00" ; on expose "08:30"
         //==============================================================================================================
         return Attribute::get(fn(?string $valeur) => $valeur ? substr($valeur, 0, 5) : null);
     }
@@ -117,6 +121,25 @@ class Seance extends BaseModel {
 
     protected function statutRender() : Attribute {
         return Attribute::get(fn() => $this->annulee ? "Annulée" : "Planifiée");
+    }
+
+
+
+    protected function statutCle() : Attribute {
+        //==============================================================================================================
+        // Clé de la pastille (statuts.ts) : annulée, appel fait, appel à faire (jour J ou passé), planifiée (à venir)
+        //==============================================================================================================
+        return Attribute::get(function () {
+            if ($this->annulee) {
+                return 'annulee';
+            }
+
+            if ($this->appel_fait_le) {
+                return 'appel_fait';
+            }
+
+            return $this->date && $this->date->lte(today()) ? 'appel_a_faire' : 'planifiee';
+        });
     }
 
 

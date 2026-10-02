@@ -2,13 +2,67 @@
 
 namespace App\Features\AnneeUniversitaire;
 
-use App\_Core\Services\RendersService;
-use App\_Core\Builders\Table\TableColumn;
 use App\_Core\Builders\Table\TableBuilder;
+use App\_Core\Builders\Table\TableColumn;
+use App\_Core\Services\RendersService;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Validation\ValidationException;
 
 class AnneeUniversitaireService {
+    //==================================================================================================================
+    // Tableau de la liste (mode_list) : l'année active porte la pastille "En cours"
+    //==================================================================================================================
+    public static function get_table() : array {
+        return TableBuilder
+            ::new(AnneeUniversitaire::query()
+                                    ->withCount('groupes'))
+            ->add_column(
+                TableColumn
+                    ::new()
+                    ->label("Année universitaire")
+                    ->nom_colonne('libelle')
+                    ->render(RendersService::render_chaine)
+                    ->triable()
+                    ->cherchable()
+            )
+            ->add_column(
+                TableColumn
+                    ::new()
+                    ->label("Début")
+                    ->nom_colonne('date_debut')
+                    ->render(RendersService::render_date)
+                    ->triable()
+            )
+            ->add_column(
+                TableColumn
+                    ::new()
+                    ->label("Fin")
+                    ->nom_colonne('date_fin')
+                    ->render(RendersService::render_date)
+                    ->triable()
+            )
+            ->add_column(
+                TableColumn
+                    ::new()
+                    ->label("Groupes")
+                    ->nom_colonne('groupes_count')
+                    ->render(RendersService::render_nombre)
+            )
+            ->add_column(
+                TableColumn
+                    ::new()
+                    ->label("Statut")
+                    ->nom_colonne('statut')
+                    ->render(RendersService::render_statut)
+                    ->valeur(fn(AnneeUniversitaire $annee) => $annee->active ? 'en_cours' : null)
+            )
+            ->default_tri('date_debut', 'desc')
+            ->row_url(fn(AnneeUniversitaire $annee) => route('annee-universitaire.detail', ['cle' => $annee->cle]))
+            ->get();
+    }
+
+
+
     //==================================================================================================================
     // Liste de toutes les années, la plus récente en premier
     //==================================================================================================================
@@ -27,6 +81,20 @@ class AnneeUniversitaireService {
         return AnneeUniversitaire
             ::active()
             ->first();
+    }
+
+
+
+    //==================================================================================================================
+    // Pour les selects : année la plus récente en premier
+    //==================================================================================================================
+    public static function get_annees_pour_select() : array {
+        return AnneeUniversitaire
+            ::query()
+            ->orderByDesc('date_debut')
+            ->get()
+            ->map(fn(AnneeUniversitaire $annee) => ['valeur' => $annee->id, 'label' => $annee->libelle])
+            ->all();
     }
 
 
@@ -54,17 +122,6 @@ class AnneeUniversitaireService {
 
 
 
-    public static function get_annees_pour_select() : array {
-        return AnneeUniversitaire
-            ::query()
-            ->orderByDesc('date_debut')
-            ->get()
-            ->map(fn(AnneeUniversitaire $annee) => ['valeur' => $annee->id, 'label' => $annee->libelle])
-            ->all();
-    }
-
-
-
     //==================================================================================================================
     // Suppression logique (soft delete), refusée si le model l'interdit
     //==================================================================================================================
@@ -72,10 +129,9 @@ class AnneeUniversitaireService {
         $annee = self::get_or_fail($cle);
 
         if (!$annee->can_be_deleted()) {
-            throw ValidationException::withMessages(
-                [
-                    'annee' => "L'année {$annee->libelle} ne peut pas être supprimée (elle est active ou contient des groupes).",
-                ]);
+            throw ValidationException::withMessages([
+                                                        'annee' => "L'année {$annee->libelle} ne peut pas être supprimée (elle est active ou contient des groupes).",
+                                                    ]);
         }
 
         $annee->delete();
@@ -92,50 +148,5 @@ class AnneeUniversitaireService {
         abort_if(!$annee, 404, "Année universitaire introuvable");
 
         return $annee;
-    }
-
-
-    //==================================================================================================================
-    // Tableau de la liste (mode_list)
-    //==================================================================================================================
-    public static function get_table() : array {
-        return TableBuilder
-            ::new(AnneeUniversitaire::query())
-            ->add_column(
-                TableColumn
-                    ::new()
-                    ->label("Libellé")
-                    ->nom_colonne('libelle')
-                    ->render(RendersService::render_chaine)
-                    ->triable()
-                    ->cherchable()
-            )
-            ->add_column(
-                TableColumn
-                    ::new()
-                    ->label("Date de début")
-                    ->nom_colonne('date_debut')
-                    ->render(RendersService::render_date)
-                    ->triable()
-            )
-            ->add_column(
-                TableColumn
-                    ::new()
-                    ->label("Date de fin")
-                    ->nom_colonne('date_fin')
-                    ->render(RendersService::render_date)
-                    ->triable()
-            )
-            ->add_column(
-                TableColumn
-                    ::new()
-                    ->label("Année en cours")
-                    ->nom_colonne('active')
-                    ->render(RendersService::render_boolean)
-                    ->triable()
-            )
-            ->default_tri('date_debut', 'desc')
-            ->row_url(fn(AnneeUniversitaire $annee) => route('annee-universitaire.detail', ['cle' => $annee->cle]))
-            ->get();
     }
 }

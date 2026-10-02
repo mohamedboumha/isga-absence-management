@@ -1,101 +1,94 @@
+<template>
+    <Head title="Connexion"/>
+
+    <!--=========================================================================================================-->
+    <!-- Message après une action (ex. mot de passe réinitialisé) -->
+    <!--=========================================================================================================-->
+    <p v-if="status" class="bg-present/10 text-present ring-present/25 mb-6 rounded-md p-3 text-sm ring-1 ring-inset">
+        {{ status }}
+    </p>
+
+    <form class="flex flex-col gap-5" @submit.prevent="se_connecter">
+        <ChampChaine
+            :mode_vue="renders.mode_edit"
+            nom_champ="email"
+            type="email"
+            label="Adresse e-mail"
+            placeholder="prenom.nom@isga.ma"
+            autocomplete="username"
+            autofocus
+            required
+            v-model:valeur="form.email"
+            :error="form.errors.email"
+        />
+
+        <ChampChaine
+            :mode_vue="renders.mode_edit"
+            nom_champ="password"
+            type="password"
+            label="Mot de passe"
+            autocomplete="current-password"
+            required
+            v-model:valeur="form.password"
+            :error="form.errors.password"
+        >
+            <template v-if="canResetPassword" #label-action>
+                <Link href="/forgot-password"
+                      class="text-muted-foreground hover:text-foreground text-sm underline-offset-4 hover:underline">
+                    Mot de passe oublié ?
+                </Link>
+            </template>
+        </ChampChaine>
+
+        <ChampBoolean
+            :mode_vue="renders.mode_edit"
+            nom_champ="remember"
+            label="Rester connecté sur cet appareil"
+            v-model:valeur="form.remember"
+        />
+
+        <Button type="submit" class="h-11" :disabled="form.processing">
+            <Spinner v-if="form.processing" class="size-4"/>
+            Se connecter
+        </Button>
+    </form>
+</template>
+
+
 <script setup lang="ts">
-import { Form, Head } from '@inertiajs/vue3';
-import InputError from '@/components/InputError.vue';
-import PasswordInput from '@/components/PasswordInput.vue';
-import TextLink from '@/components/TextLink.vue';
-import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Spinner } from '@/components/ui/spinner';
-import { store } from '@/routes/login';
-import { request } from '@/routes/password';
+import {Head, Link, useForm} from '@inertiajs/vue3';
+import {Button} from '@/components/ui/button';
+import {Spinner} from '@/components/ui/spinner';
+import ChampBoolean from '@/_core/renders/champ-boolean.vue';
+import ChampChaine from '@/_core/renders/champ-chaine.vue';
+import {renders} from '@/_core/renders';
+
+interface LoginInterface {
+    status?: string;
+    canResetPassword: boolean;
+}
+
+const props = defineProps<LoginInterface>();
 
 defineOptions({
     layout: {
-        title: 'Log in to your account',
-        description: 'Enter your email and password below to log in',
+        title: 'Connexion',
+        description: 'Connectez-vous avec votre adresse e-mail ISGA.',
     },
 });
 
-defineProps<{
-    status?: string;
-    canResetPassword: boolean;
-}>();
+//==============================================================================================================
+// Formulaire de connexion (Fortify : POST /login)
+//==============================================================================================================
+const form = useForm({
+    email: '',
+    password: '',
+    remember: false,
+});
+
+const se_connecter = () => {
+    form.post('/login', {
+        onFinish: () => form.reset('password'),
+    });
+};
 </script>
-
-<template>
-    <Head title="Log in" />
-
-    <div
-        v-if="status"
-        class="mb-4 text-center text-sm font-medium text-green-600"
-    >
-        {{ status }}
-    </div>
-
-    <Form
-        v-bind="store.form()"
-        :reset-on-success="['password']"
-        v-slot="{ errors, processing }"
-        class="flex flex-col gap-6"
-    >
-        <div class="grid gap-6">
-            <div class="grid gap-2">
-                <Label for="email">Email address</Label>
-                <Input
-                    id="email"
-                    type="email"
-                    name="email"
-                    required
-                    v-focus
-                    :tabindex="1"
-                    autocomplete="email"
-                    placeholder="email@example.com"
-                />
-                <InputError :message="errors.email" />
-            </div>
-
-            <div class="grid gap-2">
-                <div class="flex items-center justify-between">
-                    <Label for="password">Password</Label>
-                    <TextLink
-                        v-if="canResetPassword"
-                        :href="request()"
-                        class="text-sm"
-                        :tabindex="5"
-                    >
-                        Forgot your password?
-                    </TextLink>
-                </div>
-                <PasswordInput
-                    id="password"
-                    name="password"
-                    required
-                    :tabindex="2"
-                    autocomplete="current-password"
-                    placeholder="Password"
-                />
-                <InputError :message="errors.password" />
-            </div>
-
-            <div class="flex items-center justify-between">
-                <Label for="remember" class="flex items-center space-x-3">
-                    <Checkbox id="remember" name="remember" :tabindex="3" />
-                    <span>Remember me</span>
-                </Label>
-            </div>
-
-            <Button
-                type="submit"
-                class="mt-4 w-full"
-                :tabindex="4"
-                :disabled="processing"
-                data-test="login-button"
-            >
-                <Spinner v-if="processing" />
-                Log in
-            </Button>
-        </div>
-    </Form>
-</template>
